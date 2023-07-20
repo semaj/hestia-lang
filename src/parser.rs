@@ -41,9 +41,9 @@ impl Parser {
     }
 
     pub fn peek(&mut self) -> Result<AnnotatedToken, HestiaErr> {
-        if self.tokens.is_empty() {
-            self.tokens.push(self.lexer.step()?);
-        }
+        // if self.tokens.is_empty() {
+        //     self.tokens.push(self.lexer.step()?);
+        // }
         match self.tokens.get(self.cursor) {
             Some(token) => Ok(token.clone()),
             None => Err(HestiaErr::Internal(
@@ -69,11 +69,14 @@ impl Parser {
     }
 
     pub fn forward(&mut self) -> Result<AnnotatedToken, HestiaErr> {
-        if self.cursor == self.tokens.len() - 1 {
+        println!("stepping {}", self.cursor);
+        if self.tokens.len() == 0 || self.cursor > self.tokens.len() - 1 {
             self.tokens.push(self.lexer.step()?);
         }
+        println!("stepped {}", self.cursor);
+        let result = self.peek()?;
         self.cursor += 1;
-        self.peek()
+        Ok(result)
     }
 
     pub fn back(&mut self) -> Result<AnnotatedToken, HestiaErr> {
@@ -179,10 +182,6 @@ impl Parser {
         }
     }
 
-    // Parens
-    // Comments
-    // Primitives
-    // (certain) Identifiers
     pub fn parse(&mut self) -> Result<Expr, HestiaErr> {
         let next = self.forward()?;
         return match next.token {

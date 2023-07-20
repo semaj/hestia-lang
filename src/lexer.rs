@@ -122,8 +122,7 @@ impl Lexer {
             ));
         }
         loop {
-            c = self.peek_char()?;
-            if !IDENTIFIER_CHARS.contains(&c) {
+            if self.is_done() || !IDENTIFIER_CHARS.contains(&self.peek_char()?) {
                 let complete = token.iter().collect();
                 let token = if complete == "true" {
                     Token::Boolean(true)
@@ -139,6 +138,7 @@ impl Lexer {
                     col_end: self.col - 1,
                 });
             }
+            c = self.peek_char()?;
             token.push(c.clone());
             self.take()?;
         }
@@ -420,7 +420,7 @@ impl Lexer {
             None => Err(HestiaErr::Syntax(
                 self.line,
                 self.col,
-                "unexpected end-of-file".to_string(),
+                "peeking, unexpected end-of-file".to_string(),
             )),
         }
     }
@@ -440,7 +440,7 @@ impl Lexer {
             None => Err(HestiaErr::Syntax(
                 self.line,
                 self.col,
-                "unexpected end-of-file".to_string(),
+                "taking, unexpected end-of-file".to_string(),
             )),
         }
     }
@@ -464,6 +464,14 @@ mod test {
     #[test]
     fn test_tokenize() {
         let cases = vec![
+            ( "help",
+              vec![AnnotatedToken {
+                  token: Token::Identifier("help".to_string()),
+                  line: 0,
+                  col_start: 0,
+                  col_end: 3,
+              }]
+            ),
             (
                 "(+ 1 -2)",
                 vec![
