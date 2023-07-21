@@ -2,7 +2,7 @@ use crate::error::HestiaErr;
 use crate::lexer::{AnnotatedToken, Closeable, Lexer, Token};
 
 // TODO: add line/column to Expr
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     Number(f64),
     Boolean(bool),

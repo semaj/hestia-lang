@@ -14,12 +14,11 @@ fn main() -> Result<()> {
         println!("No previous history.");
     }
     loop {
-        let readline = rl.readline(">> ");
+        let readline = rl.readline("hestia> ");
         match readline {
             Ok(line) => {
-                println!("input: {}", line);
                 rl.add_history_entry(line.as_str())?;
-                println!("output: {}", evaluator::evaluate(line).unwrap());
+                println!("=> {}", evaluator::evaluate(line).unwrap());
             }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL-C");

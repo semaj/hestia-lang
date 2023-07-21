@@ -1,8 +1,9 @@
 use crate::error::HestiaErr;
 use crate::parser::{parse, Expr};
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::fmt;
 
+#[derive(Clone)]
 pub enum Base {
     Number(f64),
     Boolean(bool),
@@ -25,10 +26,12 @@ impl fmt::Display for Base {
 pub fn evaluate(raw: String) -> Result<Base, HestiaErr> {
     let parsed = parse(raw)?;
     let evaluator = Evaluator::new();
-    evaluator.eval(parsed)
+    evaluator.eval(HashMap::new(), parsed)
 }
 
 type Func = fn(Vec<Base>) -> Result<Base, HestiaErr>;
+
+type Env = HashMap<String, Base>;
 
 struct Evaluator {
     builtins: HashMap<String, Func>,
@@ -41,16 +44,16 @@ impl Evaluator {
         Self { builtins }
     }
 
-    pub fn eval(&self, expr: Expr) -> Result<Base, HestiaErr> {
+    pub fn eval(&self, env: Env, expr: Expr) -> Result<Base, HestiaErr> {
         match expr {
             Expr::Number(n) => Ok(Base::Number(n)),
             Expr::Boolean(b) => Ok(Base::Boolean(b)),
             Expr::Str(s) => Ok(Base::Str(s)),
-            Expr::And(v) => self.eval_and(v),
-            Expr::Or(v) => self.eval_or(v),
-            Expr::If(c, i, e) => self.eval_if(c, i, e),
-            Expr::Func(_, _) => todo!(),
-            Expr::Call(_, _) => todo!(),
+            Expr::And(v) => self.eval_and(env, v),
+            Expr::Or(v) => self.eval_or(env, v),
+            Expr::If(c, i, e) => self.eval_if(env, c, i, e),
+            Expr::Func(v, b) => self.eval_func(env, v, b),
+            Expr::Call(n, v) => self.eval_call(env, n, v),
             Expr::Let(_, _) => todo!(),
             Expr::Def(_, _) => todo!(),
             Expr::Identifier(_) => todo!(),
@@ -62,10 +65,10 @@ impl Evaluator {
         }
     }
 
-    pub fn eval_and(&self, exprs: Vec<Expr>) -> Result<Base, HestiaErr> {
+    pub fn eval_and(&self, env: Env, exprs: Vec<Expr>) -> Result<Base, HestiaErr> {
         arity_check(exprs.len(), Some(1), None, "and")?;
         for (i, expr) in exprs.into_iter().enumerate() {
-            let evaluated = self.eval(expr)?;
+            let evaluated = self.eval(env.clone(), expr)?;
             match evaluated {
                 Base::Boolean(b) => {
                     if !b {
@@ -83,10 +86,10 @@ impl Evaluator {
         Ok(Base::Boolean(true))
     }
 
-    pub fn eval_or(&self, exprs: Vec<Expr>) -> Result<Base, HestiaErr> {
+    pub fn eval_or(&self, env: Env, exprs: Vec<Expr>) -> Result<Base, HestiaErr> {
         arity_check(exprs.len(), Some(1), None, "or")?;
         for (i, expr) in exprs.into_iter().enumerate() {
-            let evaluated = self.eval(expr)?;
+            let evaluated = self.eval(env.clone(), expr)?;
             match evaluated {
                 Base::Boolean(b) => {
                     if b {
@@ -106,17 +109,18 @@ impl Evaluator {
 
     pub fn eval_if(
         &self,
+        env: Env,
         condition: Box<Expr>,
         then: Box<Expr>,
         els: Box<Expr>,
     ) -> Result<Base, HestiaErr> {
-        let evaluated_condition = self.eval(*condition)?;
+        let evaluated_condition = self.eval(env.clone(), *condition)?;
         match evaluated_condition {
             Base::Boolean(b) => {
                 if b {
-                    self.eval(*then)
+                    self.eval(env, *then)
                 } else {
-                    self.eval(*els)
+                    self.eval(env, *els)
                 }
             }
             _ => {
@@ -125,6 +129,68 @@ impl Evaluator {
                     evaluated_condition
                 )));
             }
+        }
+    }
+
+    pub fn eval_func(
+        &self,
+        env: Env,
+        args: Vec<String>,
+        body: Box<Expr>,
+    ) -> Result<Base, HestiaErr> {
+        Ok(Base::Func(env.clone(), args, *body))
+    }
+
+    pub fn eval_call(&self, env: Env, name: String, args: Vec<Expr>) -> Result<Base, HestiaErr> {
+        let result: Result<Vec<Base>, HestiaErr> = args
+            .into_iter()
+            .map(|x| self.eval(env.clone(), x))
+            .collect();
+        let evaluated_args = result?;
+        match self.builtins.get(&name) {
+            Some(f) => return f(evaluated_args),
+            None => {}
+        }
+        let mut args_deque = VecDeque::from(evaluated_args);
+        let num_args = args_deque.len();
+        match env.get(&name) {
+            // Automatic currying
+            Some(Base::Func(local_env, names, body)) => {
+                let mut new_env = local_env.clone();
+                let mut names_deque = VecDeque::from(names.clone());
+                let num_names = names_deque.len();
+                loop {
+                    match names_deque.pop_front() {
+                        Some(n) => match args_deque.pop_front() {
+                            Some(arg) => {
+                                new_env.insert(n, arg);
+                            }
+                            None => {
+                                names_deque.push_front(n);
+                                return Ok(Base::Func(new_env, names.clone(), body.clone()));
+                            }
+                        },
+                        None => {
+                            if args_deque.len() > 0 {
+                                return Err(HestiaErr::Runtime(format!(
+                                    "function `{}` expects {} arguments, received {}",
+                                    name, num_names, num_args,
+                                )));
+                            } else {
+                                return self.eval(new_env, body.clone());
+                            }
+                        }
+                    }
+                }
+            }
+            Some(x) => Err(HestiaErr::Runtime(format!(
+                "attempting to call non-function {} at identifier `{}`",
+                x, name
+            ))),
+            None => Err(HestiaErr::Runtime(format!(
+                "attempting to call function at unbound identifier `{}`",
+                name
+            ))),
         }
     }
 }
