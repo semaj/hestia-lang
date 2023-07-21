@@ -206,7 +206,7 @@ fn check_min(size: usize, min: usize, name: &str) -> Result<(), HestiaErr> {
 }
 
 fn check_max(size: usize, max: usize, name: &str) -> Result<(), HestiaErr> {
-    if size < max {
+    if size > max {
         return Err(HestiaErr::Runtime(format!(
             "built-in function `{}` expects no more than {} arguments, got {}",
             name, max, size
@@ -232,16 +232,16 @@ fn arity_check(
     name: &str,
 ) -> Result<(), HestiaErr> {
     match (min, max) {
-        (Some(mi), Some(ma)) => {
-            if mi == ma {
-                check_exactly(size, mi, name)
+        (Some(min), Some(max)) => {
+            if min == max {
+                check_exactly(size, min, name)
             } else {
-                check_min(size, mi, name)?;
-                check_max(size, ma, name)
+                check_min(size, min, name)?;
+                check_max(size, max, name)
             }
         }
-        (Some(mi), None) => check_min(size, mi, name),
-        (None, Some(ma)) => check_max(size, ma, name),
+        (Some(min), None) => check_min(size, min, name),
+        (None, Some(max)) => check_max(size, max, name),
         (None, None) => Err(HestiaErr::Internal(format!(
             "arity check in `{}` uses two Nones",
             name
@@ -249,8 +249,53 @@ fn arity_check(
     }
 }
 
+// fn arity_check(
+//     size: usize,
+//     min: Option<usize>,
+//     max: Option<usize>,
+//     name: &str,
+// ) -> Result<bool, HestiaErr> {
+//     match (min, max) {
+//         (Some(min), Some(max)) => {
+//             if size > max {
+//                 return Err(HestiaErr::Runtime(format!(
+//                     "built-in function `{}` expects no more than {} arguments, got {}",
+//                     name, max, size
+//                 )));
+//             }
+//             Ok(size < min)
+//         }
+//         (Some(min), None) => Ok(size < min),
+//         (None, Some(max)) => {
+//             if size > max {
+//                 Err(HestiaErr::Runtime(format!(
+//                     "built-in function `{}` expects no more than {} arguments, got {}",
+//                     name, max, size
+//                 )))
+//             } else {
+//                 Ok(false)
+//             }
+//         }
+//         (None, None) => Err(HestiaErr::Internal(format!(
+//             "arity check in `{}` uses two Nones",
+//             name
+//         ))),
+//     }
+// }
+
 fn add(args: Vec<Base>) -> Result<Base, HestiaErr> {
     arity_check(args.len(), Some(2), None, "+")?;
+    // let should_curry = arity_check(args.len(), Some(2), None, "+")?;
+    // if should_curry {
+    //     let mut env = HashMap::new();
+    //     let mut args = Vec::new();
+    //     for (i, arg) in args.iter().enumerate() {
+    //         let name = format!("_curry-{}", i);
+    //         args.push(name);
+    //         env.insert(name, arg);
+    //     }
+    //     return Ok(Base::Func(env, args, Expr::Func(
+    // }
     let mut sum = 0.0;
     for (i, arg) in args.iter().enumerate() {
         match arg {

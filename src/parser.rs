@@ -11,6 +11,7 @@ pub enum Expr {
     Or(Vec<Expr>),
     If(Box<Expr>, Box<Expr>, Box<Expr>),
     Func(Vec<String>, Box<Expr>),
+    // TODO: call anonymous functions
     Call(String, Vec<Expr>),
     Let(Vec<(String, Expr)>, Box<Expr>),
     Def(String, Box<Expr>),
