@@ -184,6 +184,21 @@ impl Lexer {
         let mut seen_dot = false;
         let mut first = true;
         loop {
+            if self.is_done() {
+                return match token.iter().collect::<String>().parse::<f64>() {
+                    Ok(num) => Ok(AnnotatedToken {
+                        token: Token::Number(num),
+                        line,
+                        col_start,
+                        col_end: self.col - 1,
+                    }),
+                    Err(_) => Err(HestiaErr::Syntax(
+                        line,
+                        col_start,
+                        "failed to parse number".to_string(),
+                    )),
+                };
+            }
             c = self.peek_char()?;
             match c {
                 '-' => {
@@ -235,6 +250,14 @@ impl Lexer {
         let col_start = self.col;
         self.take()?;
         loop {
+            if self.is_done() {
+                return Ok(AnnotatedToken {
+                    token: Token::Comment(token.iter().collect()),
+                    line,
+                    col_start,
+                    col_end: self.col - 1,
+                });
+            }
             let c = self.peek_char()?;
             if self.is_space_char(c)? && c == &'\n' {
                 return Ok(AnnotatedToken {
@@ -464,52 +487,71 @@ mod test {
     #[test]
     fn test_tokenize() {
         let cases = vec![
-            ( "help",
-              vec![AnnotatedToken {
-                  token: Token::Identifier("help".to_string()),
-                  line: 0,
-                  col_start: 0,
-                  col_end: 3,
-              }]
+            (
+                "help",
+                vec![AnnotatedToken {
+                    token: Token::Identifier("help".to_string()),
+                    line: 0,
+                    col_start: 0,
+                    col_end: 3,
+                }]
+            ),
+            (
+                "1.12",
+                vec![AnnotatedToken {
+                    token: Token::Number(1.12),
+                    line: 0,
+                    col_start: 0,
+                    col_end: 3,
+                }]
+            ),
+            (
+                "# 1.12",
+                vec![AnnotatedToken {
+                    token: Token::Comment(" 1.12".to_string()),
+                    line: 0,
+                    col_start: 0,
+                    col_end: 5,
+                }]
             ),
             (
                 "(+ 1 -2)",
                 vec![
-                    AnnotatedToken {
-                        token: Token::Closeable(Closeable::OpenParen),
-                        line: 0,
-                        col_start: 0,
-                        col_end: 0,
-                    },
-                    AnnotatedToken {
-                        token: Token::Identifier("+".to_string()),
-                        line: 0,
-                        col_start: 1,
-                        col_end: 1,
-                    },
-                    AnnotatedToken {
-                        token: Token::Number(1.0),
-                        line: 0,
-                        col_start: 3,
-                        col_end: 3,
-                    },
-                    AnnotatedToken {
-                        token: Token::Number(-2.0),
-                        line: 0,
-                        col_start: 5,
-                        col_end: 6,
-                    },
-                    AnnotatedToken {
-                        token: Token::CloseParen,
-                        line: 0,
-                        col_start: 7,
-                        col_end: 7,
-                    },
+                AnnotatedToken {
+                    token: Token::Closeable(Closeable::OpenParen),
+                    line: 0,
+                    col_start: 0,
+                    col_end: 0,
+                },
+                AnnotatedToken {
+                    token: Token::Identifier("+".to_string()),
+                    line: 0,
+                    col_start: 1,
+                    col_end: 1,
+                },
+                AnnotatedToken {
+                    token: Token::Number(1.0),
+                    line: 0,
+                    col_start: 3,
+                    col_end: 3,
+                },
+                AnnotatedToken {
+                    token: Token::Number(-2.0),
+                    line: 0,
+                    col_start: 5,
+                    col_end: 6,
+                },
+                AnnotatedToken {
+                    token: Token::CloseParen,
+                    line: 0,
+                    col_start: 7,
+                    col_end: 7,
+                },
                 ],
-            ),
-            (
-                "(let ([y 12]) # comment \n{|x| (predicate-though? -42.8 (concat \"x\" (to-string y) x))})",
-                vec![
+                ),
+                (
+                    "(let ([y 12]) # comment \n{|x| (predicate-though? -42.8 (concat \"x\" (to-string y) x))})",
+                    vec![
                     AnnotatedToken {
                         token: Token::Closeable(Closeable::OpenParen),
                         line: 0,
@@ -678,13 +720,12 @@ mod test {
                         col_start: 60,
                         col_end: 60,
                     },
-                ],
-            ),
-        ];
+                    ],
+                    ),
+                    ];
         for case in cases {
-            let expected: Result<Vec<AnnotatedToken>, HestiaErr> = Ok(case.1);
-            let got = tokenize_all(case.0.to_string());
-            assert_eq!(expected, got);
+            let got = tokenize_all(case.0.to_string()).unwrap();
+            assert_eq!(case.1, got);
         }
     }
 }
