@@ -1,15 +1,14 @@
 use crate::error::HestiaErr;
 use crate::lexer::{AnnotatedToken, Closeable, Lexer, Token};
 
+// TODO: add line/column to Expr
 #[derive(Debug, PartialEq)]
 pub enum Expr {
-    // Chain,
     Number(f64),
     Boolean(bool),
     Str(String),
     And(Vec<Expr>),
     Or(Vec<Expr>),
-    Xor(Vec<Expr>),
     If(Box<Expr>, Box<Expr>, Box<Expr>),
     Func(Vec<String>, Box<Expr>),
     Call(String, Vec<Expr>),
@@ -17,8 +16,6 @@ pub enum Expr {
     Def(String, Box<Expr>),
     Identifier(String),
 }
-
-// I want symbols and a hash literal
 
 struct Parser {
     lexer: Lexer,
@@ -41,9 +38,6 @@ impl Parser {
     }
 
     pub fn peek(&mut self) -> Result<AnnotatedToken, HestiaErr> {
-        // if self.tokens.is_empty() {
-        //     self.tokens.push(self.lexer.step()?);
-        // }
         match self.tokens.get(self.cursor) {
             Some(token) => Ok(token.clone()),
             None => Err(HestiaErr::Internal(
@@ -163,7 +157,6 @@ impl Parser {
                     match identifier {
                         "and" => Ok(Expr::And(arguments)),
                         "or" => Ok(Expr::Or(arguments)),
-                        "xor" => Ok(Expr::Xor(arguments)),
                         other => Ok(Expr::Call(other.to_string(), arguments)),
                     }
                 }
@@ -301,14 +294,6 @@ mod test {
             (
                 "(or true false false)",
                 Expr::Or(vec![
-                    Expr::Boolean(true),
-                    Expr::Boolean(false),
-                    Expr::Boolean(false),
-                ]),
-            ),
-            (
-                "(xor true false false)",
-                Expr::Xor(vec![
                     Expr::Boolean(true),
                     Expr::Boolean(false),
                     Expr::Boolean(false),

@@ -3,6 +3,7 @@ use std::fmt;
 #[derive(Debug, PartialEq)]
 pub enum HestiaErr {
     Syntax(usize, usize, String),
+    Runtime(String),
     Internal(String),
 }
 
@@ -11,6 +12,9 @@ impl fmt::Display for HestiaErr {
         match self {
             HestiaErr::Syntax(l, c, s) => {
                 write!(f, "syntax error at line {}, col {}: {}", l, c, s)
+            }
+            HestiaErr::Runtime(s) => {
+                write!(f, "runtime error: {}", s)
             }
             HestiaErr::Internal(s) => {
                 write!(f, "{}", s)
