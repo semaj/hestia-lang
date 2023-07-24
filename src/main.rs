@@ -13,12 +13,15 @@ fn main() -> Result<()> {
     if rl.load_history("hestia.history").is_err() {
         println!("No previous history.");
     }
+    let mut evaluator = evaluator::Evaluator::new();
     loop {
         let readline = rl.readline("hestia> ");
         match readline {
             Ok(line) => {
                 rl.add_history_entry(line.as_str())?;
-                println!("=> {}", evaluator::evaluate(line).unwrap());
+                rl.save_history("hestia.history")?;
+                let parsed = parser::parse(line).unwrap();
+                println!("=> {}", evaluator.eval_top(parsed).unwrap());
             }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL-C");
@@ -33,7 +36,6 @@ fn main() -> Result<()> {
                 break;
             }
         }
-        rl.save_history("hestia.history")?;
     }
     Ok(())
 }

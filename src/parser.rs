@@ -12,7 +12,7 @@ pub enum Expr {
     If(Box<Expr>, Box<Expr>, Box<Expr>),
     Func(Vec<String>, Box<Expr>),
     // TODO: call anonymous functions
-    Call(String, Vec<Expr>),
+    Call(Box<Expr>, Vec<Expr>),
     Let(Vec<(String, Expr)>, Box<Expr>),
     Def(String, Box<Expr>),
     Identifier(String),
@@ -119,8 +119,23 @@ impl Parser {
         Ok(Expr::Let(bindings, Box::new(body)))
     }
 
+    fn parse_args(&mut self) -> Result<Vec<Expr>, HestiaErr> {
+        let mut arguments = Vec::new();
+        loop {
+            let next = self.forward()?;
+            match next.token {
+                Token::CloseParen => break,
+                _ => {
+                    self.back()?;
+                    arguments.push(self.parse()?);
+                }
+            }
+        }
+        Ok(arguments)
+    }
+
     // Assumes we just parsed an open paren
-    pub fn parse_complex(&mut self) -> Result<Expr, HestiaErr> {
+    fn parse_complex(&mut self) -> Result<Expr, HestiaErr> {
         let next = self.forward()?;
         match next.token {
             Token::Identifier(s) => match s.as_str() {
@@ -144,24 +159,28 @@ impl Parser {
                 }
                 "let" => self.parse_let(),
                 identifier => {
-                    let mut arguments = Vec::new();
-                    loop {
-                        let next = self.forward()?;
-                        match next.token {
-                            Token::CloseParen => break,
-                            _ => {
-                                self.back()?;
-                                arguments.push(self.parse()?);
-                            }
-                        }
-                    }
+                    let arguments = self.parse_args()?;
                     match identifier {
                         "and" => Ok(Expr::And(arguments)),
                         "or" => Ok(Expr::Or(arguments)),
-                        other => Ok(Expr::Call(other.to_string(), arguments)),
+                        other => Ok(Expr::Call(
+                            Box::new(Expr::Identifier(other.to_string())),
+                            arguments,
+                        )),
                     }
                 }
             },
+            Token::Closeable(Closeable::OpenParen) => {
+                self.back()?;
+                let func = self.parse()?;
+                let arguments = self.parse_args()?;
+                Ok(Expr::Call(Box::new(func), arguments))
+            }
+            Token::Closeable(Closeable::OpenSquigglyParen) => {
+                let func = self.parse_function()?;
+                let arguments = self.parse_args()?;
+                Ok(Expr::Call(Box::new(func), arguments))
+            }
             _ => Err(HestiaErr::Syntax(
                 next.line,
                 next.col_start,
@@ -195,6 +214,7 @@ impl Parser {
             }
         }
         let body = self.parse()?;
+        self.forward_expect(Token::CloseSquigglyParen, "function")?;
         Ok(Expr::Func(arguments, Box::new(body)))
     }
 
