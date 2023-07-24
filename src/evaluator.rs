@@ -19,8 +19,16 @@ impl fmt::Display for Base {
             Base::Number(n) => write!(f, "{}", n),
             Base::Boolean(b) => write!(f, "{}", b),
             Base::Str(s) => write!(f, "\"{}\"", s),
-            Base::Func(_, _, _, _) => write!(f, "<function>"), // TODO
-            Base::BuiltIn(_) => write!(f, "<built-in func>"),
+            Base::Func(name, _, args, body) => {
+                write!(
+                    f,
+                    "closure {}: {{ |{}| {} }}",
+                    name.clone().unwrap_or("<anonymous>".to_string()),
+                    args.join(" "),
+                    body
+                )
+            } // TODO
+            Base::BuiltIn(_) => write!(f, "<built-in function>"),
         }
     }
 }
@@ -68,11 +76,6 @@ impl Evaluator {
             Expr::Let(_, _) => todo!(),
             Expr::Def(n, e) => self.eval_def(env, n, e),
             Expr::Identifier(i) => self.eval_identifier(env, i),
-            // Expr::Func(v, b) => self.eval_func(v, b),
-            // Expr::Call(s, v) => self.eval_call(s, v),
-            // Expr::Let(v, b) => self.eval_let(v, b),
-            // Expr::Def(s, b) => self.eval_def(s, b),
-            // Expr::Identifier(s) => self.eval_identifier(s),
         }
     }
 
@@ -227,7 +230,12 @@ impl Evaluator {
                             }
                             None => {
                                 parameters.push_front(param);
-                                return Ok(Base::Func(name, new_env, Vec::from(parameters), body.clone()));
+                                return Ok(Base::Func(
+                                    name,
+                                    new_env,
+                                    Vec::from(parameters),
+                                    body.clone(),
+                                ));
                             }
                         },
                         None => {

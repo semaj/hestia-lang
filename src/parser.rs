@@ -1,5 +1,6 @@
 use crate::error::HestiaErr;
 use crate::lexer::{AnnotatedToken, Closeable, Lexer, Token};
+use std::fmt;
 
 // TODO: add line/column to Expr
 #[derive(Clone, Debug, PartialEq)]
@@ -16,6 +17,37 @@ pub enum Expr {
     Let(Vec<(String, Expr)>, Box<Expr>),
     Def(String, Box<Expr>),
     Identifier(String),
+}
+
+impl fmt::Display for Expr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Expr::Number(n) => write!(f, "{}", n),
+            Expr::Boolean(b) => write!(f, "{}", b),
+            Expr::Str(s) => write!(f, "\"{}\"", s),
+            Expr::And(v) => {
+                let args: Vec<String> = v.iter().map(|x| format!("{}", x)).collect();
+                write!(f, "(and {})", args.join(" "))
+            }
+            Expr::Or(v) => {
+                let args: Vec<String> = v.iter().map(|x| format!("{}", x)).collect();
+                write!(f, "(or {})", args.join(" "))
+            }
+            Expr::If(a, b, c) => write!(f, "(if {} {} {})", a, b, c),
+            Expr::Func(v, body) => write!(f, "{{|{}| {} }}", v.join(" "), body),
+            Expr::Call(called, v) => {
+                let args: Vec<String> = v.iter().map(|x| format!("{}", x)).collect();
+                write!(f, "({} {})", called, args.join(" "))
+            }
+            Expr::Let(v, body) => {
+                let bindings: Vec<String> =
+                    v.iter().map(|(x, y)| format!("[{} {}]", x, y)).collect();
+                write!(f, "(let ({}) {})", bindings.join(""), body)
+            }
+            Expr::Def(s, body) => write!(f, "(def {} {})", s, body),
+            Expr::Identifier(s) => write!(f, "{}", s),
+        }
+    }
 }
 
 struct Parser {

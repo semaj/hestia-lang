@@ -20,8 +20,21 @@ fn main() -> Result<()> {
             Ok(line) => {
                 rl.add_history_entry(line.as_str())?;
                 rl.save_history("hestia.history")?;
-                let parsed = parser::parse(line).unwrap();
-                println!("=> {}", evaluator.eval_top(parsed).unwrap());
+                match parser::parse(line) {
+                    Ok(parsed) => {
+                        match evaluator.eval_top(parsed) {
+                            Ok(evaluated) => {
+                                println!("=> {}", evaluated)
+                            }
+                            Err(e) => {
+                                eprintln!("{}", e)
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("{}", e);
+                    }
+                }
             }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL-C");
