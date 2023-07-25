@@ -21,16 +21,14 @@ fn main() -> Result<()> {
                 rl.add_history_entry(line.as_str())?;
                 rl.save_history("hestia.history")?;
                 match parser::parse(line) {
-                    Ok(parsed) => {
-                        match evaluator.eval_top(parsed) {
-                            Ok(evaluated) => {
-                                println!("=> {}", evaluated)
-                            }
-                            Err(e) => {
-                                eprintln!("{}", e)
-                            }
+                    Ok(parsed) => match evaluator.eval_top(parsed) {
+                        Ok(evaluated) => {
+                            println!("=> {}", evaluated)
                         }
-                    }
+                        Err(e) => {
+                            eprintln!("{}", e)
+                        }
+                    },
                     Err(e) => {
                         eprintln!("{}", e);
                     }
