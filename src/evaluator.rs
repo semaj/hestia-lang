@@ -73,10 +73,23 @@ impl Evaluator {
             Expr::If(c, i, e) => self.eval_if(env, c, i, e),
             Expr::Func(v, b) => self.eval_func(env, v, b),
             Expr::Call(f, v) => self.eval_call(env, f, v),
-            Expr::Let(_, _) => todo!(),
+            Expr::Let(v, b) => self.eval_let(env, v, b),
             Expr::Def(n, e) => self.eval_def(env, n, e),
             Expr::Identifier(i) => self.eval_identifier(env, i),
         }
+    }
+
+    fn eval_let(
+        &mut self,
+        mut env: Env,
+        bindings: Vec<(String, Expr)>,
+        body: Box<Expr>,
+    ) -> Result<Base, HestiaErr> {
+        for (name, expr) in bindings.into_iter() {
+            let evaluated_expr = self.eval(env.clone(), expr)?;
+            env.insert(name, evaluated_expr);
+        }
+        self.eval(env, *body)
     }
 
     fn eval_identifier(&self, env: Env, name: String) -> Result<Base, HestiaErr> {
