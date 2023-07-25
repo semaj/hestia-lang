@@ -11,6 +11,7 @@ pub enum Base {
     Number(f64),
     Boolean(bool),
     Str(String),
+    List(Vec<Base>),
     Func(Option<String>, HashMap<String, Base>, Vec<String>, Expr),
     BuiltIn(Func),
 }
@@ -22,6 +23,10 @@ impl fmt::Display for Base {
             Base::Number(n) => write!(f, "{}", n),
             Base::Boolean(b) => write!(f, "{}", b),
             Base::Str(s) => write!(f, "\"{}\"", s),
+            Base::List(v) => {
+            let args: Vec<String> = v.iter().map(|x| format!("{}", x)).collect();
+            write!(f, "[{}]", args.join(" "))
+            }
             Base::Func(name, _, args, body) => {
                 write!(
                     f,
@@ -67,6 +72,11 @@ impl Evaluator {
             Expr::Number(n) => Ok(Base::Number(n)),
             Expr::Boolean(b) => Ok(Base::Boolean(b)),
             Expr::Str(s) => Ok(Base::Str(s)),
+            Expr::List(v) => {
+                let elements: Result<Vec<Base>, HestiaErr> =
+                    v.into_iter().map(|x| self.eval(env.clone(), x)).collect();
+                Ok(Base::List(elements?))
+            }
             Expr::And(v) => self.eval_and(env, v),
             Expr::Or(v) => self.eval_or(env, v),
             Expr::If(c, i, e) => self.eval_if(env, c, i, e),
@@ -273,4 +283,3 @@ impl Evaluator {
         }
     }
 }
-

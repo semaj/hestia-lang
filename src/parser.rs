@@ -8,6 +8,7 @@ pub enum Expr {
     Number(f64),
     Boolean(bool),
     Str(String),
+    List(Vec<Expr>),
     And(Vec<Expr>),
     Or(Vec<Expr>),
     If(Box<Expr>, Box<Expr>, Box<Expr>),
@@ -25,6 +26,10 @@ impl fmt::Display for Expr {
             Expr::Number(n) => write!(f, "{}", n),
             Expr::Boolean(b) => write!(f, "{}", b),
             Expr::Str(s) => write!(f, "\"{}\"", s),
+            Expr::List(v) => {
+                let args: Vec<String> = v.iter().map(|x| format!("{}", x)).collect();
+                write!(f, "[{}]", args.join(" "))
+            }
             Expr::And(v) => {
                 let args: Vec<String> = v.iter().map(|x| format!("{}", x)).collect();
                 write!(f, "(and {})", args.join(" "))
@@ -259,6 +264,20 @@ impl Parser {
             Token::Identifier(s) => Ok(Expr::Identifier(s)),
             Token::Closeable(Closeable::OpenSquigglyParen) => self.parse_function(),
             Token::Closeable(Closeable::OpenParen) => self.parse_complex(),
+            Token::Closeable(Closeable::OpenSquareParen) => {
+                let mut elements = Vec::new();
+                loop {
+                    let next = self.forward()?;
+                    match next.token {
+                        Token::CloseSquareParen => break,
+                        _ => {
+                            self.back()?;
+                            elements.push(self.parse()?);
+                        }
+                    }
+                }
+                Ok(Expr::List(elements))
+            }
             _ => {
                 return Err(HestiaErr::Syntax(
                     next.line,
