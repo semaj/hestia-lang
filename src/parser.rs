@@ -1,14 +1,22 @@
 use crate::error::HestiaErr;
 use crate::lexer::{AnnotatedToken, Closeable, Lexer, Token};
+use std::collections::HashMap;
 use std::fmt;
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Hashable {
+    Integer(i64),
+    Boolean(bool),
+    Str(String),
+}
 
 // TODO: add line/column to Expr
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
-    Number(f64),
-    Boolean(bool),
-    Str(String),
+    Hashable(Hashable),
+    Float(f64),
     List(Vec<Expr>),
+    // Map(HashMap<Expr, Expr>),
     And(Vec<Expr>),
     Or(Vec<Expr>),
     If(Box<Expr>, Box<Expr>, Box<Expr>),
@@ -23,9 +31,10 @@ pub enum Expr {
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Expr::Number(n) => write!(f, "{}", n),
-            Expr::Boolean(b) => write!(f, "{}", b),
-            Expr::Str(s) => write!(f, "\"{}\"", s),
+            Expr::Hashable(Hashable::Integer(n)) => write!(f, "{}", n),
+            Expr::Hashable(Hashable::Boolean(b)) => write!(f, "{}", b),
+            Expr::Hashable(Hashable::Str(s)) => write!(f, "\"{}\"", s),
+            Expr::Float(n) => write!(f, "{}", n),
             Expr::List(v) => {
                 let args: Vec<String> = v.iter().map(|x| format!("{}", x)).collect();
                 write!(f, "[{}]", args.join(" "))
@@ -258,9 +267,10 @@ impl Parser {
     pub fn parse(&mut self) -> Result<Expr, HestiaErr> {
         let next = self.forward()?;
         return match next.token {
-            Token::Boolean(b) => Ok(Expr::Boolean(b)),
-            Token::Number(n) => Ok(Expr::Number(n)),
-            Token::Str(s) => Ok(Expr::Str(s)),
+            Token::Boolean(b) => Ok(Expr::Hashable(Hashable::Boolean(b))),
+            Token::Integer(n) => Ok(Expr::Hashable(Hashable::Integer(n))),
+            Token::Str(s) => Ok(Expr::Hashable(Hashable::Str(s))),
+            Token::Float(n) => Ok(Expr::Float(n)),
             Token::Identifier(s) => Ok(Expr::Identifier(s)),
             Token::Closeable(Closeable::OpenSquigglyParen) => self.parse_function(),
             Token::Closeable(Closeable::OpenParen) => self.parse_complex(),

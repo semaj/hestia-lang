@@ -2,13 +2,14 @@ mod builtin;
 
 use crate::error::HestiaErr;
 use crate::evaluator::builtin::*;
-use crate::parser::{parse, Expr};
+use crate::parser::{parse, Expr, Hashable};
 use std::collections::{HashMap, VecDeque};
 use std::fmt;
 
 #[derive(Clone)]
 pub enum Base {
-    Number(f64),
+    Integer(i64),
+    Float(f64),
     Boolean(bool),
     Str(String),
     List(Vec<Base>),
@@ -20,12 +21,13 @@ pub enum Base {
 impl fmt::Display for Base {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Base::Number(n) => write!(f, "{}", n),
+            Base::Float(n) => write!(f, "{:?}", n),
+            Base::Integer(n) => write!(f, "{}", n),
             Base::Boolean(b) => write!(f, "{}", b),
             Base::Str(s) => write!(f, "\"{}\"", s),
             Base::List(v) => {
-            let args: Vec<String> = v.iter().map(|x| format!("{}", x)).collect();
-            write!(f, "[{}]", args.join(" "))
+                let args: Vec<String> = v.iter().map(|x| format!("{}", x)).collect();
+                write!(f, "[{}]", args.join(" "))
             }
             Base::Func(name, _, args, body) => {
                 write!(
@@ -69,9 +71,10 @@ impl Evaluator {
 
     pub fn eval(&mut self, env: Env, expr: Expr) -> Result<Base, HestiaErr> {
         match expr {
-            Expr::Number(n) => Ok(Base::Number(n)),
-            Expr::Boolean(b) => Ok(Base::Boolean(b)),
-            Expr::Str(s) => Ok(Base::Str(s)),
+            Expr::Hashable(Hashable::Integer(n)) => Ok(Base::Integer(n)),
+            Expr::Hashable(Hashable::Boolean(b)) => Ok(Base::Boolean(b)),
+            Expr::Hashable(Hashable::Str(s)) => Ok(Base::Str(s)),
+            Expr::Float(n) => Ok(Base::Float(n)),
             Expr::List(v) => {
                 let elements: Result<Vec<Base>, HestiaErr> =
                     v.into_iter().map(|x| self.eval(env.clone(), x)).collect();

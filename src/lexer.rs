@@ -29,7 +29,8 @@ pub enum Token {
     Identifier(String),
     Boolean(bool),
     Comment(String),
-    Number(f64),
+    Integer(i64),
+    Float(f64),
     Str(String),
     Closeable(Closeable),
 }
@@ -44,7 +45,8 @@ impl fmt::Display for Token {
             Token::Identifier(s) => write!(f, "{}", s),
             Token::Boolean(s) => write!(f, "{}", s),
             Token::Comment(s) => write!(f, "#{}", s),
-            Token::Number(n) => write!(f, "{}", n),
+            Token::Integer(n) => write!(f, "{}", n),
+            Token::Float(n) => write!(f, "{}", n),
             Token::Str(s) => write!(f, "\"{}\"", s),
             Token::Closeable(Closeable::OpenParen) => write!(f, "("),
             Token::Closeable(Closeable::OpenSquareParen) => write!(f, "["),
@@ -185,19 +187,35 @@ impl Lexer {
         let mut first = true;
         loop {
             if self.is_done() {
-                return match token.iter().collect::<String>().parse::<f64>() {
-                    Ok(num) => Ok(AnnotatedToken {
-                        token: Token::Number(num),
-                        line,
-                        col_start,
-                        col_end: self.col - 1,
-                    }),
-                    Err(_) => Err(HestiaErr::Syntax(
-                        line,
-                        col_start,
-                        "failed to parse number".to_string(),
-                    )),
-                };
+                        if seen_dot {
+                            return match token.iter().collect::<String>().parse::<f64>() {
+                                Ok(num) => Ok(AnnotatedToken {
+                                    token: Token::Float(num),
+                                    line,
+                                    col_start,
+                                    col_end: self.col - 1,
+                                }),
+                                Err(_) => Err(HestiaErr::Syntax(
+                                    line,
+                                    col_start,
+                                    "failed to parse float".to_string(),
+                                )),
+                            };
+                        } else {
+                            return match token.iter().collect::<String>().parse::<i64>() {
+                                Ok(num) => Ok(AnnotatedToken {
+                                    token: Token::Integer(num),
+                                    line,
+                                    col_start,
+                                    col_end: self.col - 1,
+                                }),
+                                Err(_) => Err(HestiaErr::Syntax(
+                                    line,
+                                    col_start,
+                                    "failed to parse integer".to_string(),
+                                )),
+                            };
+                        }
             }
             c = self.peek_char()?;
             match c {
@@ -222,19 +240,35 @@ impl Lexer {
                 }
                 c => {
                     if !NUMBER_CHARS.contains(&c) {
-                        return match token.iter().collect::<String>().parse::<f64>() {
-                            Ok(num) => Ok(AnnotatedToken {
-                                token: Token::Number(num),
-                                line,
-                                col_start,
-                                col_end: self.col - 1,
-                            }),
-                            Err(_) => Err(HestiaErr::Syntax(
-                                line,
-                                col_start,
-                                "failed to parse number".to_string(),
-                            )),
-                        };
+                        if seen_dot {
+                            return match token.iter().collect::<String>().parse::<f64>() {
+                                Ok(num) => Ok(AnnotatedToken {
+                                    token: Token::Float(num),
+                                    line,
+                                    col_start,
+                                    col_end: self.col - 1,
+                                }),
+                                Err(_) => Err(HestiaErr::Syntax(
+                                    line,
+                                    col_start,
+                                    "failed to parse float".to_string(),
+                                )),
+                            };
+                        } else {
+                            return match token.iter().collect::<String>().parse::<i64>() {
+                                Ok(num) => Ok(AnnotatedToken {
+                                    token: Token::Integer(num),
+                                    line,
+                                    col_start,
+                                    col_end: self.col - 1,
+                                }),
+                                Err(_) => Err(HestiaErr::Syntax(
+                                    line,
+                                    col_start,
+                                    "failed to parse integer".to_string(),
+                                )),
+                            };
+                        }
                     }
                 }
             }
