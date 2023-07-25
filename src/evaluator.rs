@@ -37,8 +37,8 @@ impl fmt::Display for Base {
                     args.join(" "),
                     body
                 )
-            } // TODO
-            Base::BuiltIn(_) => write!(f, "<built-in function>"),
+            }
+            Base::BuiltIn(func) => write!(f, "function: {}", func.name),
         }
     }
 }
