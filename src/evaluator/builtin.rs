@@ -1,5 +1,6 @@
 use crate::error::HestiaErr;
 use crate::evaluator::{Base, Env};
+use crate::parser::Hashable;
 use std::collections::HashMap;
 
 type F = fn(Vec<Base>) -> Result<Base, HestiaErr>;
@@ -11,6 +12,12 @@ pub struct Func {
     min_args: Option<usize>,
     max_args: Option<usize>,
     f: F,
+}
+
+impl PartialEq<Func> for Func{
+    fn eq(&self, other: &Func) -> bool {
+        self.name == other.name
+    }
 }
 
 pub fn builtins() -> Env {
@@ -27,7 +34,7 @@ pub fn builtins() -> Env {
             let mut int_used = false;
             for (i, arg) in args.iter().enumerate() {
                 match arg {
-                    Base::Integer(n) => {
+                    Base::Hashable(Hashable::Integer(n)) => {
                         int_used = true;
                         int_sum += n;
                         if float_used {
@@ -58,7 +65,7 @@ pub fn builtins() -> Env {
             if float_used {
                 Ok(Base::Float(float_sum))
             } else {
-                Ok(Base::Integer(int_sum))
+                Ok(Base::Hashable(Hashable::Integer(int_sum)))
             }
         },
     }];

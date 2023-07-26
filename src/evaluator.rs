@@ -2,17 +2,16 @@ mod builtin;
 
 use crate::error::HestiaErr;
 use crate::evaluator::builtin::*;
-use crate::parser::{parse, Expr, Hashable};
+use crate::parser::{parse, Expr, Hashable, Map};
 use std::collections::{HashMap, VecDeque};
 use std::fmt;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum Base {
-    Integer(i64),
+    Hashable(Hashable),
     Float(f64),
-    Boolean(bool),
-    Str(String),
     List(Vec<Base>),
+    Map(Map<Base>),
     Func(Option<String>, HashMap<String, Base>, Vec<String>, Expr),
     BuiltIn(Func),
 }
@@ -21,13 +20,20 @@ pub enum Base {
 impl fmt::Display for Base {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            Base::Hashable(Hashable::Integer(n)) => write!(f, "{}", n),
+            Base::Hashable(Hashable::Boolean(b)) => write!(f, "{}", b),
+            Base::Hashable(Hashable::Str(s)) => write!(f, "\"{}\"", s),
             Base::Float(n) => write!(f, "{:?}", n),
-            Base::Integer(n) => write!(f, "{}", n),
-            Base::Boolean(b) => write!(f, "{}", b),
-            Base::Str(s) => write!(f, "\"{}\"", s),
             Base::List(v) => {
                 let args: Vec<String> = v.iter().map(|x| format!("{}", x)).collect();
                 write!(f, "[{}]", args.join(" "))
+            }
+            Base::Map(hm) => {
+                write!(f, "{{ ")?;
+                for (k, v) in hm.map.iter() {
+                    write!(f, "{}: {} ", k, v)?;
+                }
+                write!(f, "}}")
             }
             Base::Func(name, _, args, body) => {
                 write!(
@@ -71,14 +77,19 @@ impl Evaluator {
 
     pub fn eval(&mut self, env: Env, expr: Expr) -> Result<Base, HestiaErr> {
         match expr {
-            Expr::Hashable(Hashable::Integer(n)) => Ok(Base::Integer(n)),
-            Expr::Hashable(Hashable::Boolean(b)) => Ok(Base::Boolean(b)),
-            Expr::Hashable(Hashable::Str(s)) => Ok(Base::Str(s)),
+            Expr::Hashable(h) => Ok(Base::Hashable(h)),
             Expr::Float(n) => Ok(Base::Float(n)),
             Expr::List(v) => {
                 let elements: Result<Vec<Base>, HestiaErr> =
                     v.into_iter().map(|x| self.eval(env.clone(), x)).collect();
                 Ok(Base::List(elements?))
+            }
+            Expr::Map(hm) => {
+                let mut result: HashMap<Hashable, Base> = HashMap::new();
+                for (k, v) in hm.map.into_iter() {
+                    result.insert(k, self.eval(env.clone(), v)?);
+                }
+                Ok(Base::Map(Map { map: result }))
             }
             Expr::And(v) => self.eval_and(env, v),
             Expr::Or(v) => self.eval_or(env, v),
@@ -161,9 +172,9 @@ impl Evaluator {
         for (i, expr) in exprs.into_iter().enumerate() {
             let evaluated = self.eval(env.clone(), expr)?;
             match evaluated {
-                Base::Boolean(b) => {
+                Base::Hashable(Hashable::Boolean(b)) => {
                     if !b {
-                        return Ok(Base::Boolean(false));
+                        return Ok(Base::Hashable(Hashable::Boolean(false)));
                     }
                 }
                 _ => {
@@ -174,7 +185,7 @@ impl Evaluator {
                 }
             }
         }
-        Ok(Base::Boolean(true))
+        Ok(Base::Hashable(Hashable::Boolean(true)))
     }
 
     pub fn eval_or(&mut self, env: Env, exprs: Vec<Expr>) -> Result<Base, HestiaErr> {
@@ -182,9 +193,9 @@ impl Evaluator {
         for (i, expr) in exprs.into_iter().enumerate() {
             let evaluated = self.eval(env.clone(), expr)?;
             match evaluated {
-                Base::Boolean(b) => {
+                Base::Hashable(Hashable::Boolean(b)) => {
                     if b {
-                        return Ok(Base::Boolean(true));
+                        return Ok(Base::Hashable(Hashable::Boolean(true)));
                     }
                 }
                 _ => {
@@ -195,7 +206,7 @@ impl Evaluator {
                 }
             }
         }
-        Ok(Base::Boolean(false))
+        Ok(Base::Hashable(Hashable::Boolean(false)))
     }
 
     fn eval_if(
@@ -207,7 +218,7 @@ impl Evaluator {
     ) -> Result<Base, HestiaErr> {
         let evaluated_condition = self.eval(env.clone(), *condition)?;
         match evaluated_condition {
-            Base::Boolean(b) => {
+            Base::Hashable(Hashable::Boolean(b)) => {
                 if b {
                     self.eval(env, *then)
                 } else {
