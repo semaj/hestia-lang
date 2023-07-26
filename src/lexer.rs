@@ -73,10 +73,9 @@ pub struct Lexer {
     chars: Vec<char>,
 }
 
-static NUMBER_CHARS: [&'static char; 10] =
-    [&'1', &'2', &'3', &'4', &'5', &'6', &'7', &'8', &'9', &'0'];
+static NUMBER_CHARS: [&char; 10] = [&'1', &'2', &'3', &'4', &'5', &'6', &'7', &'8', &'9', &'0'];
 
-static IDENTIFIER_CHARS: [&'static char; 68] = [
+static IDENTIFIER_CHARS: [&char; 68] = [
     &'a', &'b', &'c', &'d', &'e', &'f', &'g', &'h', &'i', &'j', &'k', &'l', &'m', &'n', &'o', &'p',
     &'q', &'r', &'s', &'t', &'u', &'v', &'w', &'x', &'y', &'z', &'A', &'B', &'C', &'D', &'E', &'F',
     &'G', &'H', &'I', &'J', &'K', &'L', &'M', &'N', &'O', &'P', &'Q', &'R', &'S', &'T', &'U', &'V',
@@ -117,7 +116,7 @@ impl Lexer {
         let mut token: Vec<char> = Vec::new();
         let line = self.line;
         let col_start = self.col;
-        let mut c = self.peek_char()?;
+        let c = self.peek_char()?;
         if !IDENTIFIER_CHARS.contains(&c) || c == &'-' {
             return Err(HestiaErr::Syntax(
                 self.line,
@@ -142,9 +141,7 @@ impl Lexer {
                     col_end: self.col - 1,
                 });
             }
-            c = self.peek_char()?;
-            token.push(c.clone());
-            self.take()?;
+            token.push(*self.take()?);
         }
     }
 
@@ -166,7 +163,7 @@ impl Lexer {
                     return Ok(r);
                 }
                 c => {
-                    token.push(c.clone());
+                    token.push(*c);
                 }
             }
             self.take()?;
@@ -302,8 +299,7 @@ impl Lexer {
                 }
             }
             first = false;
-            token.push(c.clone());
-            self.take()?;
+            token.push(*self.take()?);
         }
     }
 
@@ -330,8 +326,7 @@ impl Lexer {
                     col_end: self.col - 1,
                 });
             }
-            token.push(c.clone());
-            self.take()?;
+            token.push(*self.take()?);
         }
     }
 
@@ -478,20 +473,19 @@ impl Lexer {
     }
 }
 
-fn tokenize_all(raw: String) -> Result<Vec<AnnotatedToken>, HestiaErr> {
-    let mut lexer = Lexer::new(raw.chars().collect());
-    let mut tokens = Vec::new();
-    while !lexer.is_done() {
-        let token = lexer.step()?;
-        tokens.push(token);
-    }
-    Ok(tokens)
-}
-
 #[cfg(test)]
 mod test {
     use crate::lexer::*;
     use pretty_assertions::assert_eq;
+    fn tokenize_all(raw: String) -> Result<Vec<AnnotatedToken>, HestiaErr> {
+        let mut lexer = Lexer::new(raw.chars().collect());
+        let mut tokens = Vec::new();
+        while !lexer.is_done() {
+            let token = lexer.step()?;
+            tokens.push(token);
+        }
+        Ok(tokens)
+    }
 
     #[test]
     fn test_tokenize() {

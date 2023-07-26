@@ -63,6 +63,12 @@ pub struct Evaluator {
     defs: Env,
 }
 
+impl Default for Evaluator {
+    fn default() -> Self {
+        Evaluator::new()
+    }
+}
+
 impl Evaluator {
     pub fn new() -> Self {
         Self {
@@ -94,11 +100,11 @@ impl Evaluator {
             }
             Expr::And(v) => self.eval_and(env, v),
             Expr::Or(v) => self.eval_or(env, v),
-            Expr::If(c, i, e) => self.eval_if(env, c, i, e),
-            Expr::Func(v, b) => self.eval_func(env, v, b),
-            Expr::Call(f, v) => self.eval_call(env, f, v),
-            Expr::Let(v, b) => self.eval_let(env, v, b),
-            Expr::Def(n, e) => self.eval_def(env, n, e),
+            Expr::If(c, i, e) => self.eval_if(env, *c, *i, *e),
+            Expr::Func(v, b) => self.eval_func(env, v, *b),
+            Expr::Call(f, v) => self.eval_call(env, *f, v),
+            Expr::Let(v, b) => self.eval_let(env, v, *b),
+            Expr::Def(n, e) => self.eval_def(env, n, *e),
             Expr::Identifier(i) => self.eval_identifier(env, i),
         }
     }
@@ -107,23 +113,21 @@ impl Evaluator {
         &mut self,
         mut env: Env,
         bindings: Vec<(String, Expr)>,
-        body: Box<Expr>,
+        body: Expr,
     ) -> Result<Base, HestiaErr> {
         for (name, expr) in bindings.into_iter() {
             let evaluated_expr = self.eval(env.clone(), expr)?;
             env.insert(name, evaluated_expr);
         }
-        self.eval(env, *body)
+        self.eval(env, body)
     }
 
     fn eval_identifier(&self, env: Env, name: String) -> Result<Base, HestiaErr> {
-        match env.get(&name) {
-            Some(x) => return Ok(x.clone()),
-            None => {}
+        if let Some(x) = env.get(&name) {
+            return Ok(x.clone());
         }
-        match self.defs.get(&name) {
-            Some(x) => return Ok(x.clone()),
-            None => {}
+        if let Some(x) = self.defs.get(&name) {
+            return Ok(x.clone());
         }
         match self.builtins.get(&name) {
             Some(x) => Ok(x.clone()),
@@ -134,32 +138,26 @@ impl Evaluator {
         }
     }
 
-    fn eval_def(&mut self, env: Env, name: String, expr: Box<Expr>) -> Result<Base, HestiaErr> {
+    fn eval_def(&mut self, env: Env, name: String, expr: Expr) -> Result<Base, HestiaErr> {
         if self.builtins.contains_key(&name) {
             return Err(HestiaErr::Runtime(format!(
                 "identifier `{}` is already bound to a built-in function",
                 name
             )));
         }
-        match env.get(&name) {
-            Some(x) => {
-                return Err(HestiaErr::Runtime(format!(
-                    "identifier `{}` is already let-bound to {}",
-                    name, x
-                )));
-            }
-            None => {}
+        if let Some(x) = env.get(&name) {
+            return Err(HestiaErr::Runtime(format!(
+                "identifier `{}` is already let-bound to {}",
+                name, x
+            )));
         }
-        match self.defs.get(&name) {
-            Some(x) => {
-                return Err(HestiaErr::Runtime(format!(
-                    "identifier `{}` is already def-bound to {}",
-                    name, x
-                )));
-            }
-            None => {}
+        if let Some(x) = self.defs.get(&name) {
+            return Err(HestiaErr::Runtime(format!(
+                "identifier `{}` is already def-bound to {}",
+                name, x
+            )));
         }
-        let mut evaluated = self.eval(env.clone(), *expr)?;
+        let mut evaluated = self.eval(env.clone(), expr)?;
         evaluated = match evaluated {
             Base::Func(_, a, b, c) => Base::Func(Some(name.clone()), a, b, c),
             _ => evaluated,
@@ -213,39 +211,32 @@ impl Evaluator {
     fn eval_if(
         &mut self,
         env: Env,
-        condition: Box<Expr>,
-        then: Box<Expr>,
-        els: Box<Expr>,
+        condition: Expr,
+        then: Expr,
+        els: Expr,
     ) -> Result<Base, HestiaErr> {
-        let evaluated_condition = self.eval(env.clone(), *condition)?;
+        let evaluated_condition = self.eval(env.clone(), condition)?;
         match evaluated_condition {
             Base::Hashable(Hashable::Boolean(b)) => {
                 if b {
-                    self.eval(env, *then)
+                    self.eval(env, then)
                 } else {
-                    self.eval(env, *els)
+                    self.eval(env, els)
                 }
             }
-            _ => {
-                return Err(HestiaErr::Runtime(format!(
-                    "`if` expects a condition of type Boolean, got {}",
-                    evaluated_condition
-                )));
-            }
+            _ => Err(HestiaErr::Runtime(format!(
+                "`if` expects a condition of type Boolean, got {}",
+                evaluated_condition
+            ))),
         }
     }
 
-    fn eval_func(&self, env: Env, args: Vec<String>, body: Box<Expr>) -> Result<Base, HestiaErr> {
-        Ok(Base::Func(None, env.clone(), args, *body))
+    fn eval_func(&self, env: Env, args: Vec<String>, body: Expr) -> Result<Base, HestiaErr> {
+        Ok(Base::Func(None, env.clone(), args, body))
     }
 
-    fn eval_call(
-        &mut self,
-        env: Env,
-        called: Box<Expr>,
-        args: Vec<Expr>,
-    ) -> Result<Base, HestiaErr> {
-        let evaluated_called = self.eval(env.clone(), *called)?;
+    fn eval_call(&mut self, env: Env, called: Expr, args: Vec<Expr>) -> Result<Base, HestiaErr> {
+        let evaluated_called = self.eval(env.clone(), called)?;
         let result: Result<Vec<Base>, HestiaErr> = args
             .into_iter()
             .map(|x| self.eval(env.clone(), x))
@@ -276,7 +267,7 @@ impl Evaluator {
                             }
                         },
                         None => {
-                            if arguments.len() > 0 {
+                            if !arguments.is_empty() {
                                 return Err(HestiaErr::Runtime(format!(
                                     "function `{}` expects {} arguments, received {}",
                                     name.unwrap_or("<anonymous>".to_string()),
@@ -290,7 +281,7 @@ impl Evaluator {
                     }
                 }
             }
-            Base::BuiltIn(f) => return f.call(evaluated_args),
+            Base::BuiltIn(f) => f.call(evaluated_args),
             _ => Err(HestiaErr::Runtime(format!(
                 "attempting to call non-function `{}`",
                 evaluated_called

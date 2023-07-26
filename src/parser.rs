@@ -153,7 +153,7 @@ impl Parser {
     }
 
     pub fn forward(&mut self) -> Result<AnnotatedToken, HestiaErr> {
-        if self.tokens.len() == 0 || self.cursor > self.tokens.len() - 1 {
+        if self.tokens.is_empty() || self.cursor > self.tokens.len() - 1 {
             self.tokens.push(self.lexer.step()?);
         }
         let result = self.peek()?;
@@ -348,7 +348,7 @@ impl Parser {
 
     pub fn parse(&mut self) -> Result<Expr, HestiaErr> {
         let next = self.forward()?;
-        return match next.token {
+        match next.token {
             Token::Boolean(b) => Ok(Expr::Hashable(Hashable::Boolean(b))),
             Token::Integer(n) => Ok(Expr::Hashable(Hashable::Integer(n))),
             Token::Str(s) => Ok(Expr::Hashable(Hashable::Str(s))),
@@ -371,14 +371,12 @@ impl Parser {
                 }
                 Ok(Expr::List(elements))
             }
-            _ => {
-                return Err(HestiaErr::Syntax(
-                    next.line,
-                    next.col_start,
-                    format!("unexpected {} at top-level parse", next.token),
-                ))
-            }
-        };
+            _ => Err(HestiaErr::Syntax(
+                next.line,
+                next.col_start,
+                format!("unexpected {} at top-level parse", next.token),
+            )),
+        }
     }
 }
 

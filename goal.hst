@@ -1,4 +1,0 @@
-(open-file "test.txt")
-  :> split-lines
-  :> (map {|x| (i1 x) :> to-num })
-  :> (foldr {|x, acc| x + acc })

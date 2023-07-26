@@ -14,7 +14,7 @@ pub struct Func {
     f: F,
 }
 
-impl PartialEq<Func> for Func{
+impl PartialEq<Func> for Func {
     fn eq(&self, other: &Func) -> bool {
         self.name == other.name
     }
@@ -79,23 +79,19 @@ impl Func {
     pub fn call(&self, mut args: Vec<Base>) -> Result<Base, HestiaErr> {
         let mut new_args = self.curried_args.clone();
         new_args.append(&mut args);
-        match self.min_args {
-            Some(min) => {
-                let len = new_args.len();
-                if len < min {
-                    return Ok(Base::BuiltIn(Func {
-                        name: format!("curried_{}", self.name),
-                        curried_args: new_args,
-                        min_args: self.min_args,
-                        max_args: self.max_args,
-                        f: self.f,
-                    }));
-                }
+        if let Some(min) = self.min_args {
+            let len = new_args.len();
+            if len < min {
+                return Ok(Base::BuiltIn(Func {
+                    name: format!("curried_{}", self.name),
+                    curried_args: new_args,
+                    min_args: self.min_args,
+                    max_args: self.max_args,
+                    f: self.f,
+                }));
             }
-            None => {}
         }
-        match self.max_args {
-            Some(max) => {
+        if let Some(max) = self.max_args {
                 if new_args.len() > max {
                     return Err(HestiaErr::Runtime(format!(
                         "built-in function `{}` expects no more than {} arguments, got {}",
@@ -104,8 +100,6 @@ impl Func {
                         new_args.len()
                     )));
                 }
-            }
-            None => {}
         }
         (self.f)(new_args)
     }
