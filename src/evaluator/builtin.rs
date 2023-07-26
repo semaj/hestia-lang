@@ -92,14 +92,14 @@ impl Func {
             }
         }
         if let Some(max) = self.max_args {
-                if new_args.len() > max {
-                    return Err(HestiaErr::Runtime(format!(
-                        "built-in function `{}` expects no more than {} arguments, got {}",
-                        self.name,
-                        max,
-                        new_args.len()
-                    )));
-                }
+            if new_args.len() > max {
+                return Err(HestiaErr::Runtime(format!(
+                    "built-in function `{}` expects no more than {} arguments, got {}",
+                    self.name,
+                    max,
+                    new_args.len()
+                )));
+            }
         }
         (self.f)(new_args)
     }
