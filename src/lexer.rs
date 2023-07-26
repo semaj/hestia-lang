@@ -75,12 +75,12 @@ pub struct Lexer {
 
 static NUMBER_CHARS: [&char; 10] = [&'1', &'2', &'3', &'4', &'5', &'6', &'7', &'8', &'9', &'0'];
 
-static IDENTIFIER_CHARS: [&char; 68] = [
+static IDENTIFIER_CHARS: [&char; 67] = [
     &'a', &'b', &'c', &'d', &'e', &'f', &'g', &'h', &'i', &'j', &'k', &'l', &'m', &'n', &'o', &'p',
     &'q', &'r', &'s', &'t', &'u', &'v', &'w', &'x', &'y', &'z', &'A', &'B', &'C', &'D', &'E', &'F',
     &'G', &'H', &'I', &'J', &'K', &'L', &'M', &'N', &'O', &'P', &'Q', &'R', &'S', &'T', &'U', &'V',
     &'W', &'X', &'Y', &'Z', &'1', &'2', &'3', &'4', &'5', &'6', &'7', &'8', &'9', &'0', &'-', &'!',
-    &'?', &'<', &'>', &'+',
+    &'?', &'<', &'>',
 ];
 
 impl Lexer {
@@ -518,7 +518,7 @@ mod test {
                 }]
             ),
             (
-                "(+ 1 -2)",
+                "(add 1 -2)",
                 vec![
                 AnnotatedToken {
                     token: Token::Closeable(Closeable::OpenParen),
@@ -527,28 +527,28 @@ mod test {
                     col_end: 0,
                 },
                 AnnotatedToken {
-                    token: Token::Identifier("+".to_string()),
+                    token: Token::Identifier("add".to_string()),
                     line: 0,
                     col_start: 1,
-                    col_end: 1,
+                    col_end: 3,
                 },
                 AnnotatedToken {
                     token: Token::Integer(1),
                     line: 0,
-                    col_start: 3,
-                    col_end: 3,
+                    col_start: 5,
+                    col_end: 5,
                 },
                 AnnotatedToken {
                     token: Token::Integer(-2),
                     line: 0,
-                    col_start: 5,
-                    col_end: 6,
+                    col_start: 7,
+                    col_end: 8,
                 },
                 AnnotatedToken {
                     token: Token::CloseParen,
                     line: 0,
-                    col_start: 7,
-                    col_end: 7,
+                    col_start: 9,
+                    col_end: 9,
                 },
                 ],
                 ),
@@ -727,8 +727,8 @@ mod test {
                     ),
                     ];
         for case in cases {
-            let got = tokenize_all(case.0.to_string()).unwrap();
-            assert_eq!(case.1, got);
+            let got = tokenize_all(case.0.to_string());
+            assert_eq!(Ok(case.1), got);
         }
     }
 }

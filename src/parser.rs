@@ -407,9 +407,9 @@ mod test {
                 ),
             ),
             (
-                "(+ 1 -2)",
+                "(add 1 -2)",
                 Expr::Call(
-                    Box::new(Expr::Identifier("+".to_string())),
+                    Box::new(Expr::Identifier("add".to_string())),
                     vec![
                         Expr::Hashable(Hashable::Integer(1)),
                         Expr::Hashable(Hashable::Integer(-2)),
@@ -440,11 +440,11 @@ mod test {
                 ),
             ),
             (
-                "{|x y z| (+ x y z) }",
+                "{|x y z| (add x y z) }",
                 Expr::Func(
                     vec!["x".to_string(), "y".to_string(), "z".to_string()],
                     Box::new(Expr::Call(
-                        Box::new(Expr::Identifier("+".to_string())),
+                        Box::new(Expr::Identifier("add".to_string())),
                         vec![
                             Expr::Identifier("x".to_string()),
                             Expr::Identifier("y".to_string()),

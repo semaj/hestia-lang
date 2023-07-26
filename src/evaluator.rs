@@ -6,6 +6,33 @@ use crate::parser::{parse, Expr, Hashable, Map};
 use std::collections::{HashMap, VecDeque};
 use std::fmt;
 
+#[derive(Clone, PartialEq, Debug)]
+pub enum Type {
+    Integer,
+    Boolean,
+    Str,
+    Symbol,
+    Float,
+    List,
+    Map,
+    Func,
+}
+
+impl fmt::Display for Type {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Type::Integer => write!(f, "Integer"),
+            Type::Boolean => write!(f, "Boolean"),
+            Type::Str => write!(f, "String"),
+            Type::Symbol => write!(f, "Symbol"),
+            Type::Float => write!(f, "Float"),
+            Type::List => write!(f, "List"),
+            Type::Map => write!(f, "Map"),
+            Type::Func => write!(f, "Function"),
+        }
+    }
+}
+
 #[derive(Clone, PartialEq)]
 pub enum Base {
     Hashable(Hashable),
@@ -14,6 +41,32 @@ pub enum Base {
     Map(Map<Base>),
     Func(Option<String>, HashMap<String, Base>, Vec<String>, Expr),
     BuiltIn(Func),
+}
+
+pub fn get_arg(name: &str, index: usize, args: &[Base]) -> Result<Base, HestiaErr> {
+    match args.get(index) {
+        Some(x) => Ok(x.clone()),
+        None => Err(HestiaErr::Internal(format!(
+            "built-in function `{}` attempting to access non-existent argument {}",
+            name, index
+        ))),
+    }
+}
+
+impl Base {
+    fn to_type(&self) -> Type {
+        match self {
+            Base::Hashable(Hashable::Integer(_)) => Type::Integer,
+            Base::Hashable(Hashable::Boolean(_)) => Type::Boolean,
+            Base::Hashable(Hashable::Str(_)) => Type::Str,
+            Base::Hashable(Hashable::Symbol(_)) => Type::Symbol,
+            Base::Float(_) => Type::Float,
+            Base::List(_) => Type::List,
+            Base::Map(_) => Type::Map,
+            Base::Func(..) => Type::Func,
+            Base::BuiltIn(_) => Type::Func,
+        }
+    }
 }
 
 // TODO: define type function that converts base to human-readable type
