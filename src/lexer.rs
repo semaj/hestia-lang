@@ -25,6 +25,7 @@ pub enum Token {
     CloseParen,
     CloseSquareParen,
     CloseSquigglyParen,
+    Colon,
     Identifier(String),
     Boolean(bool),
     Comment(String),
@@ -40,6 +41,7 @@ impl fmt::Display for Token {
             Token::CloseParen => write!(f, ")"),
             Token::CloseSquareParen => write!(f, "]"),
             Token::CloseSquigglyParen => write!(f, "}}"),
+            Token::Colon => write!(f, ":"),
             Token::Identifier(s) => write!(f, "{}", s),
             Token::Boolean(s) => write!(f, "{}", s),
             Token::Comment(s) => write!(f, "#{}", s),
@@ -391,6 +393,16 @@ impl Lexer {
                 };
                 self.take()?;
                 Ok(r)
+            }
+            ':' => {
+            let r = AnnotatedToken {
+                token: Token::Colon,
+                line: self.line,
+                col_start: self.col,
+                col_end: self.col,
+            };
+            self.take()?;
+            Ok(r)
             }
             '#' => self.take_comment(),
             c => {
