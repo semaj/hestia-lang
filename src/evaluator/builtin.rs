@@ -6,7 +6,8 @@ type F = fn(Vec<Base>) -> Result<Base, HestiaErr>;
 
 #[derive(Clone)]
 pub struct Func {
-    name: String,
+    pub name: String,
+    curried_args: Vec<Base>,
     min_args: Option<usize>,
     max_args: Option<usize>,
     f: F,
@@ -16,6 +17,7 @@ pub fn builtins() -> Env {
     let mut builtins: Env = HashMap::new();
     let funcs = vec![Func {
         name: "+".to_string(),
+        curried_args: Vec::new(),
         min_args: Some(2),
         max_args: None,
         f: |args: Vec<Base>| -> Result<Base, HestiaErr> {
@@ -67,55 +69,47 @@ pub fn builtins() -> Env {
 }
 
 impl Func {
-    pub fn call(&self, args: Vec<Base>) -> Result<Base, HestiaErr> {
+    pub fn call(&self, mut args: Vec<Base>) -> Result<Base, HestiaErr> {
+        let mut new_args = self.curried_args.clone();
+        new_args.append(&mut args);
         match self.min_args {
             Some(min) => {
-                if args.len() < min {
-                    return Err(HestiaErr::Runtime(format!(
-                                "built-in function `{}` expects at least {} arguments, got {}",
-                                self.name,
-                                min,
-                                args.len()
-                                )));
+                let len = new_args.len();
+                if len < min {
+                    return Ok(Base::BuiltIn(Func {
+                        name: format!("curried_{}", self.name),
+                        curried_args: new_args,
+                        min_args: self.min_args,
+                        max_args: self.max_args,
+                        f: self.f,
+                    }));
                 }
-
-                // let len = args.len();
-                // if len < min {
-                // let mut env = HashMap::new();
-                //     let mut deque = VecDeque::from(args);
-                //     for i in (0..len) {
-                //         let popped = deque.pop_front();
-                //         env.insert(format!("
-                //
-                //     }
-                //     Ok(Base::Func(None,
-                // }
             }
             None => {}
         }
         match self.max_args {
             Some(max) => {
-                if args.len() > max {
+                if new_args.len() > max {
                     return Err(HestiaErr::Runtime(format!(
-                                "built-in function `{}` expects no more than {} arguments, got {}",
-                                self.name,
-                                max,
-                                args.len()
-                                )));
+                        "built-in function `{}` expects no more than {} arguments, got {}",
+                        self.name,
+                        max,
+                        new_args.len()
+                    )));
                 }
             }
             None => {}
         }
-        (self.f)(args)
+        (self.f)(new_args)
     }
 }
 
 fn check_min(size: usize, min: usize, name: &str) -> Result<(), HestiaErr> {
     if size < min {
         return Err(HestiaErr::Runtime(format!(
-                    "built-in `{}` expects at least {} arguments, got {}",
-                    name, min, size
-                    )));
+            "built-in `{}` expects at least {} arguments, got {}",
+            name, min, size
+        )));
     }
     Ok(())
 }
@@ -123,9 +117,9 @@ fn check_min(size: usize, min: usize, name: &str) -> Result<(), HestiaErr> {
 fn check_max(size: usize, max: usize, name: &str) -> Result<(), HestiaErr> {
     if size > max {
         return Err(HestiaErr::Runtime(format!(
-                    "built-in `{}` expects no more than {} arguments, got {}",
-                    name, max, size
-                    )));
+            "built-in `{}` expects no more than {} arguments, got {}",
+            name, max, size
+        )));
     }
     Ok(())
 }
@@ -133,9 +127,9 @@ fn check_max(size: usize, max: usize, name: &str) -> Result<(), HestiaErr> {
 fn check_exactly(size: usize, expected: usize, name: &str) -> Result<(), HestiaErr> {
     if size != expected {
         return Err(HestiaErr::Runtime(format!(
-                    "built-in `{}` expects exactly {} arguments, got {}",
-                    name, expected, size
-                    )));
+            "built-in `{}` expects exactly {} arguments, got {}",
+            name, expected, size
+        )));
     }
     Ok(())
 }
@@ -145,7 +139,7 @@ pub fn arity_check(
     min: Option<usize>,
     max: Option<usize>,
     name: &str,
-    ) -> Result<(), HestiaErr> {
+) -> Result<(), HestiaErr> {
     match (min, max) {
         (Some(min), Some(max)) => {
             if min == max {
@@ -158,8 +152,8 @@ pub fn arity_check(
         (Some(min), None) => check_min(size, min, name),
         (None, Some(max)) => check_max(size, max, name),
         (None, None) => Err(HestiaErr::Internal(format!(
-                    "arity check in `{}` uses two Nones",
-                    name
-                    ))),
+            "arity check in `{}` uses two Nones",
+            name
+        ))),
     }
 }
