@@ -289,7 +289,6 @@ impl Parser {
                 self.back()?;
                 self.parse_function()
             }
-            // Token::CloseSquigglyParen => Ok(Expr::Map(Map{ map: HashMap::new()})),
             _ => {
                 let mut kvs = HashMap::new();
                 loop {
