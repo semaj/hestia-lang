@@ -25,7 +25,6 @@ pub enum Token {
     CloseParen,
     CloseSquareParen,
     CloseSquigglyParen,
-    Chain,
     Identifier(String),
     Boolean(bool),
     Comment(String),
@@ -41,7 +40,6 @@ impl fmt::Display for Token {
             Token::CloseParen => write!(f, ")"),
             Token::CloseSquareParen => write!(f, "]"),
             Token::CloseSquigglyParen => write!(f, "}}"),
-            Token::Chain => write!(f, ":>"),
             Token::Identifier(s) => write!(f, "{}", s),
             Token::Boolean(s) => write!(f, "{}", s),
             Token::Comment(s) => write!(f, "#{}", s),
@@ -384,26 +382,6 @@ impl Lexer {
                 Ok(r)
             }
             '"' => self.take_str(),
-            ':' => {
-                let r = AnnotatedToken {
-                    token: Token::Chain,
-                    line: self.line,
-                    col_start: self.col,
-                    col_end: self.col + 1,
-                };
-                self.take()?;
-                match self.peek_char()? {
-                    '>' => {
-                        self.take()?;
-                        Ok(r)
-                    }
-                    c => Err(HestiaErr::Syntax(
-                        self.line,
-                        self.col,
-                        format!("expected chain operator :>, got :{}", c),
-                    )),
-                }
-            }
             '|' => {
                 let r = AnnotatedToken {
                     token: Token::Closeable(Closeable::Pipe),
