@@ -280,6 +280,43 @@ impl Parser {
         }
     }
 
+    fn parse_function_or_map(&mut self) -> Result<Expr, HestiaErr> {
+        let mut next = self.forward()?;
+        match next.token {
+            Token::Closeable(Closeable::Pipe) => {
+                self.back()?;
+                self.parse_function()
+            }
+            // Token::CloseSquigglyParen => Ok(Expr::Map(Map{ map: HashMap::new()})),
+            _ => {
+                let mut kvs = HashMap::new();
+                loop {
+                    match next.token {
+                        Token::CloseSquigglyParen => return Ok(Expr::Map(Map { map: kvs })),
+                        _ => {
+                            self.back()?;
+                            let key = self.parse()?;
+                            self.forward_expect(Token::Colon, "map")?;
+                            let value = self.parse()?;
+                            match key {
+                                Expr::Hashable(h) => {
+                                    kvs.insert(h, value);
+                                }
+                                _ => {
+                                    return Err(HestiaErr::Runtime(format!(
+                                        "map keys must be Hashable, {} is not",
+                                        key
+                                    )))
+                                }
+                            }
+                        }
+                    }
+                    next = self.forward()?;
+                }
+            }
+        }
+    }
+
     fn parse_function(&mut self) -> Result<Expr, HestiaErr> {
         self.forward_expect(Token::Closeable(Closeable::Pipe), "function")?;
         let mut arguments = Vec::new();
@@ -313,7 +350,7 @@ impl Parser {
             Token::Str(s) => Ok(Expr::Hashable(Hashable::Str(s))),
             Token::Float(n) => Ok(Expr::Float(n)),
             Token::Identifier(s) => Ok(Expr::Identifier(s)),
-            Token::Closeable(Closeable::OpenSquigglyParen) => self.parse_function(),
+            Token::Closeable(Closeable::OpenSquigglyParen) => self.parse_function_or_map(),
             Token::Closeable(Closeable::OpenParen) => self.parse_complex(),
             Token::Closeable(Closeable::OpenSquareParen) => {
                 let mut elements = Vec::new();
@@ -439,8 +476,8 @@ mod test {
             ),
         ];
         for case in cases {
-            let got = parse(case.0.to_string()).unwrap();
-            assert_eq!(case.1, got);
+            let got = parse(case.0.to_string());
+            assert_eq!(Ok(case.1), got, "{}", case.0);
         }
     }
 }
