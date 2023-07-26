@@ -8,6 +8,7 @@ pub enum Hashable {
     Integer(i64),
     Boolean(bool),
     Str(String),
+    Symbol(String),
 }
 
 impl fmt::Display for Hashable {
@@ -16,6 +17,7 @@ impl fmt::Display for Hashable {
             Hashable::Integer(n) => write!(f, "{}", n),
             Hashable::Boolean(b) => write!(f, "{}", b),
             Hashable::Str(s) => write!(f, "\"{}\"", s),
+            Hashable::Symbol(s) => write!(f, "'{}", s),
         }
     }
 }
@@ -302,6 +304,9 @@ impl Parser {
                                 Expr::Hashable(h) => {
                                     kvs.insert(h, value);
                                 }
+                                Expr::Identifier(i) => {
+                                    kvs.insert(Hashable::Symbol(i), value);
+                                }
                                 _ => {
                                     return Err(HestiaErr::Runtime(format!(
                                         "map keys must be Hashable, {} is not",
@@ -348,6 +353,7 @@ impl Parser {
             Token::Boolean(b) => Ok(Expr::Hashable(Hashable::Boolean(b))),
             Token::Integer(n) => Ok(Expr::Hashable(Hashable::Integer(n))),
             Token::Str(s) => Ok(Expr::Hashable(Hashable::Str(s))),
+            Token::Symbol(s) => Ok(Expr::Hashable(Hashable::Symbol(s))),
             Token::Float(n) => Ok(Expr::Float(n)),
             Token::Identifier(s) => Ok(Expr::Identifier(s)),
             Token::Closeable(Closeable::OpenSquigglyParen) => self.parse_function_or_map(),

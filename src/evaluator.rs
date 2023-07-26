@@ -20,9 +20,10 @@ pub enum Base {
 impl fmt::Display for Base {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Base::Hashable(Hashable::Integer(n)) => write!(f, "{}", n),
-            Base::Hashable(Hashable::Boolean(b)) => write!(f, "{}", b),
-            Base::Hashable(Hashable::Str(s)) => write!(f, "\"{}\"", s),
+            Base::Hashable(h) => write!(f, "{}", h),
+            // Base::Hashable(Hashable::Boolean(b)) => write!(f, "{}", b),
+            // Base::Hashable(Hashable::Str(s)) => write!(f, "\"{}\"", s),
+            // Base::Hashable(Hashable::Symbol(s)) => write!(f, "\"{}\"", s),
             Base::Float(n) => write!(f, "{:?}", n),
             Base::List(v) => {
                 let args: Vec<String> = v.iter().map(|x| format!("{}", x)).collect();

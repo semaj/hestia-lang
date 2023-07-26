@@ -32,6 +32,7 @@ pub enum Token {
     Integer(i64),
     Float(f64),
     Str(String),
+    Symbol(String),
     Closeable(Closeable),
 }
 
@@ -48,6 +49,7 @@ impl fmt::Display for Token {
             Token::Integer(n) => write!(f, "{}", n),
             Token::Float(n) => write!(f, "{}", n),
             Token::Str(s) => write!(f, "\"{}\"", s),
+            Token::Symbol(s) => write!(f, "'{}", s),
             Token::Closeable(Closeable::OpenParen) => write!(f, "("),
             Token::Closeable(Closeable::OpenSquareParen) => write!(f, "["),
             Token::Closeable(Closeable::OpenSquigglyParen) => write!(f, "{{"),
@@ -168,6 +170,33 @@ impl Lexer {
                 }
             }
             self.take()?;
+        }
+    }
+
+    fn take_symbol(&mut self) -> Result<AnnotatedToken, HestiaErr> {
+        let mut token: Vec<char> = Vec::new();
+        let line = self.line;
+        let col_start = self.col;
+        self.take()?; // Take the quote
+        if !IDENTIFIER_CHARS.contains(&self.peek_char()?) {
+            return Err(HestiaErr::Syntax(
+                line,
+                col_start,
+                "invalid empty symbol".to_string(),
+            ));
+        }
+        loop {
+            if self.is_done() || !IDENTIFIER_CHARS.contains(&self.peek_char()?) {
+                let complete = token.iter().collect();
+                let token = Token::Symbol(complete);
+                return Ok(AnnotatedToken {
+                    token,
+                    line,
+                    col_start,
+                    col_end: self.col - 1,
+                });
+            }
+            token.push(*self.take()?);
         }
     }
 
@@ -384,6 +413,7 @@ impl Lexer {
                 Ok(r)
             }
             '"' => self.take_str(),
+            '\'' => self.take_symbol(),
             '|' => {
                 let r = AnnotatedToken {
                     token: Token::Closeable(Closeable::Pipe),
@@ -395,14 +425,14 @@ impl Lexer {
                 Ok(r)
             }
             ':' => {
-            let r = AnnotatedToken {
-                token: Token::Colon,
-                line: self.line,
-                col_start: self.col,
-                col_end: self.col,
-            };
-            self.take()?;
-            Ok(r)
+                let r = AnnotatedToken {
+                    token: Token::Colon,
+                    line: self.line,
+                    col_start: self.col,
+                    col_end: self.col,
+                };
+                self.take()?;
+                Ok(r)
             }
             '#' => self.take_comment(),
             c => {
