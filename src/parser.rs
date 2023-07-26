@@ -307,28 +307,43 @@ mod test {
     fn test_parse() {
         let cases = vec![
             ("help", Expr::Identifier("help".to_string())),
-            ("true", Expr::Boolean(true)),
-            ("false", Expr::Boolean(false)),
-            ("1.12", Expr::Number(1.12)),
-            ("\"1.12\"", Expr::Str("1.12".to_string())),
-            ("\"hello\nworld\"", Expr::Str("hello\nworld".to_string())),
+            ("true", Expr::Hashable(Hashable::Boolean(true))),
+            ("false", Expr::Hashable(Hashable::Boolean(false))),
+            ("1.12", Expr::Float(1.12)),
+            (
+                "\"1.12\"",
+                Expr::Hashable(Hashable::Str("1.12".to_string())),
+            ),
+            (
+                "\"hello\nworld\"",
+                Expr::Hashable(Hashable::Str("hello\nworld".to_string())),
+            ),
             (
                 "(def x 12)",
-                Expr::Def("x".to_string(), Box::new(Expr::Number(12.0))),
+                Expr::Def(
+                    "x".to_string(),
+                    Box::new(Expr::Hashable(Hashable::Integer(12))),
+                ),
             ),
             (
                 "(+ 1 -2)",
-                Expr::Call("+".to_string(), vec![Expr::Number(1.0), Expr::Number(-2.0)]),
+                Expr::Call(
+                    Box::new(Expr::Identifier("+".to_string())),
+                    vec![
+                        Expr::Hashable(Hashable::Integer(1)),
+                        Expr::Hashable(Hashable::Integer(-2)),
+                    ],
+                ),
             ),
             (
                 "(de x \"a\" 1.12 true)",
                 Expr::Call(
-                    "de".to_string(),
+                    Box::new(Expr::Identifier("de".to_string())),
                     vec![
                         Expr::Identifier("x".to_string()),
-                        Expr::Str("a".to_string()),
-                        Expr::Number(1.12),
-                        Expr::Boolean(true),
+                        Expr::Hashable(Hashable::Str("a".to_string())),
+                        Expr::Float(1.12),
+                        Expr::Hashable(Hashable::Boolean(true)),
                     ],
                 ),
             ),
@@ -336,8 +351,8 @@ mod test {
                 "(let ([x 12] [y true] [z y]) x)",
                 Expr::Let(
                     vec![
-                        ("x".to_string(), Expr::Number(12.0)),
-                        ("y".to_string(), Expr::Boolean(true)),
+                        ("x".to_string(), Expr::Hashable(Hashable::Integer(12))),
+                        ("y".to_string(), Expr::Hashable(Hashable::Boolean(true))),
                         ("z".to_string(), Expr::Identifier("y".to_string())),
                     ],
                     Box::new(Expr::Identifier("x".to_string())),
@@ -348,7 +363,7 @@ mod test {
                 Expr::Func(
                     vec!["x".to_string(), "y".to_string(), "z".to_string()],
                     Box::new(Expr::Call(
-                        "+".to_string(),
+                        Box::new(Expr::Identifier("+".to_string())),
                         vec![
                             Expr::Identifier("x".to_string()),
                             Expr::Identifier("y".to_string()),
@@ -360,25 +375,25 @@ mod test {
             (
                 "(if true \"help\" \"nope\")",
                 Expr::If(
-                    Box::new(Expr::Boolean(true)),
-                    Box::new(Expr::Str("help".to_string())),
-                    Box::new(Expr::Str("nope".to_string())),
+                    Box::new(Expr::Hashable(Hashable::Boolean(true))),
+                    Box::new(Expr::Hashable(Hashable::Str("help".to_string()))),
+                    Box::new(Expr::Hashable(Hashable::Str("nope".to_string()))),
                 ),
             ),
             (
                 "(and true false false)",
                 Expr::And(vec![
-                    Expr::Boolean(true),
-                    Expr::Boolean(false),
-                    Expr::Boolean(false),
+                    Expr::Hashable(Hashable::Boolean(true)),
+                    Expr::Hashable(Hashable::Boolean(false)),
+                    Expr::Hashable(Hashable::Boolean(false)),
                 ]),
             ),
             (
                 "(or true false false)",
                 Expr::Or(vec![
-                    Expr::Boolean(true),
-                    Expr::Boolean(false),
-                    Expr::Boolean(false),
+                    Expr::Hashable(Hashable::Boolean(true)),
+                    Expr::Hashable(Hashable::Boolean(false)),
+                    Expr::Hashable(Hashable::Boolean(false)),
                 ]),
             ),
         ];

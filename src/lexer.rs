@@ -187,35 +187,35 @@ impl Lexer {
         let mut first = true;
         loop {
             if self.is_done() {
-                        if seen_dot {
-                            return match token.iter().collect::<String>().parse::<f64>() {
-                                Ok(num) => Ok(AnnotatedToken {
-                                    token: Token::Float(num),
-                                    line,
-                                    col_start,
-                                    col_end: self.col - 1,
-                                }),
-                                Err(_) => Err(HestiaErr::Syntax(
-                                    line,
-                                    col_start,
-                                    "failed to parse float".to_string(),
-                                )),
-                            };
-                        } else {
-                            return match token.iter().collect::<String>().parse::<i64>() {
-                                Ok(num) => Ok(AnnotatedToken {
-                                    token: Token::Integer(num),
-                                    line,
-                                    col_start,
-                                    col_end: self.col - 1,
-                                }),
-                                Err(_) => Err(HestiaErr::Syntax(
-                                    line,
-                                    col_start,
-                                    "failed to parse integer".to_string(),
-                                )),
-                            };
-                        }
+                if seen_dot {
+                    return match token.iter().collect::<String>().parse::<f64>() {
+                        Ok(num) => Ok(AnnotatedToken {
+                            token: Token::Float(num),
+                            line,
+                            col_start,
+                            col_end: self.col - 1,
+                        }),
+                        Err(_) => Err(HestiaErr::Syntax(
+                            line,
+                            col_start,
+                            "failed to parse float".to_string(),
+                        )),
+                    };
+                } else {
+                    return match token.iter().collect::<String>().parse::<i64>() {
+                        Ok(num) => Ok(AnnotatedToken {
+                            token: Token::Integer(num),
+                            line,
+                            col_start,
+                            col_end: self.col - 1,
+                        }),
+                        Err(_) => Err(HestiaErr::Syntax(
+                            line,
+                            col_start,
+                            "failed to parse integer".to_string(),
+                        )),
+                    };
+                }
             }
             c = self.peek_char()?;
             match c {
@@ -324,7 +324,6 @@ impl Lexer {
                 self.step()
             }
             '(' => {
-                // self.stack.push(Closeable::OpenParen);
                 let r = AnnotatedToken {
                     token: Token::Closeable(Closeable::OpenParen),
                     line: self.line,
@@ -335,20 +334,6 @@ impl Lexer {
                 Ok(r)
             }
             ')' => {
-                // match self.stack.pop() {
-                //     Some(Closeable::OpenParen) => Ok(()),
-                //     Some(p) => Err(HestiaErr::Syntax(
-                //         self.line,
-                //         self.col,
-                //         // TODO: implement Display for Closeable
-                //         format!("tried to close with ) but dangling open {}", p),
-                //     )),
-                //     None => Err(HestiaErr::Syntax(
-                //         self.line,
-                //         self.col,
-                //         "tried to close with ) but no open parens".to_string(),
-                //     )),
-                // }?;
                 let r = AnnotatedToken {
                     token: Token::CloseParen,
                     line: self.line,
@@ -359,7 +344,6 @@ impl Lexer {
                 Ok(r)
             }
             '[' => {
-                // self.stack.push(Closeable::OpenSquareParen);
                 let r = AnnotatedToken {
                     token: Token::Closeable(Closeable::OpenSquareParen),
                     line: self.line,
@@ -370,20 +354,6 @@ impl Lexer {
                 Ok(r)
             }
             ']' => {
-                // match self.stack.pop() {
-                //     Some(Closeable::OpenSquareParen) => Ok(()),
-                //     Some(p) => Err(HestiaErr::Syntax(
-                //         self.line,
-                //         self.col,
-                //         // TODO: implement Display for Closeable
-                //         format!("tried to close with ] but dangling open {}", p),
-                //     )),
-                //     None => Err(HestiaErr::Syntax(
-                //         self.line,
-                //         self.col,
-                //         "tried to close with ] but no open parens".to_string(),
-                //     )),
-                // }?;
                 let r = AnnotatedToken {
                     token: Token::CloseSquareParen,
                     line: self.line,
@@ -401,24 +371,9 @@ impl Lexer {
                     col_end: self.col,
                 };
                 self.take()?;
-                // self.stack.push(Closeable::OpenSquigglyParen);
                 Ok(r)
             }
             '}' => {
-                // match self.stack.pop() {
-                //     Some(Closeable::OpenSquareParen) => Ok(()),
-                //     Some(p) => Err(HestiaErr::Syntax(
-                //         self.line,
-                //         self.col,
-                //         // TODO: implement Display for Closeable
-                //         format!("tried to close with }} but dangling open {}", p),
-                //     )),
-                //     None => Err(HestiaErr::Syntax(
-                //         self.line,
-                //         self.col,
-                //         "tried to close with }} but no open parens".to_string(),
-                //     )),
-                // }?;
                 let r = AnnotatedToken {
                     token: Token::CloseSquigglyParen,
                     line: self.line,
@@ -533,7 +488,7 @@ mod test {
             (
                 "1.12",
                 vec![AnnotatedToken {
-                    token: Token::Number(1.12),
+                    token: Token::Float(1.12),
                     line: 0,
                     col_start: 0,
                     col_end: 3,
@@ -564,13 +519,13 @@ mod test {
                     col_end: 1,
                 },
                 AnnotatedToken {
-                    token: Token::Number(1.0),
+                    token: Token::Integer(1),
                     line: 0,
                     col_start: 3,
                     col_end: 3,
                 },
                 AnnotatedToken {
-                    token: Token::Number(-2.0),
+                    token: Token::Integer(-2),
                     line: 0,
                     col_start: 5,
                     col_end: 6,
@@ -617,7 +572,7 @@ mod test {
                         col_end: 7,
                     },
                     AnnotatedToken {
-                        token: Token::Number(12.0),
+                        token: Token::Integer(12),
                         line: 0,
                         col_start: 9,
                         col_end: 10,
@@ -677,7 +632,7 @@ mod test {
                         col_end: 22,
                     },
                     AnnotatedToken {
-                        token: Token::Number(-42.8),
+                        token: Token::Float(-42.8),
                         line: 1,
                         col_start: 24,
                         col_end: 28,
