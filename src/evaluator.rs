@@ -5,6 +5,7 @@ use crate::evaluator::builtin::*;
 use crate::parser::{parse, Expr, Hashable, Map};
 use std::collections::{HashMap, VecDeque};
 use std::fmt;
+use std::str::FromStr;
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum Type {
@@ -16,7 +17,29 @@ pub enum Type {
     List,
     Map,
     Func,
-    // TypeName(Option<Box<Type>>),
+    TypeName,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct ParseTypeError;
+
+impl FromStr for Type {
+    type Err = ParseTypeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "Integer" => Ok(Type::Integer),
+            "Boolean" => Ok(Type::Boolean),
+            "String" => Ok(Type::Str),
+            "Symbol" => Ok(Type::Symbol),
+            "Float" => Ok(Type::Float),
+            "List" => Ok(Type::List),
+            "Map" => Ok(Type::Map),
+            "Func" => Ok(Type::Func),
+            "Type" => Ok(Type::TypeName),
+            _ => Err(ParseTypeError),
+        }
+    }
 }
 
 impl fmt::Display for Type {
@@ -30,13 +53,14 @@ impl fmt::Display for Type {
             Type::List => write!(f, "List"),
             Type::Map => write!(f, "Map"),
             Type::Func => write!(f, "Function"),
-            // Type::TypeName( => write!(f, "Type"),
+            Type::TypeName => write!(f, "Type"),
         }
     }
 }
 
 #[derive(Clone, PartialEq)]
 pub enum Base {
+    Type(Type),
     Hashable(Hashable),
     Float(f64),
     List(Vec<Base>),
@@ -67,6 +91,7 @@ impl Base {
             Base::Map(_) => Type::Map,
             Base::Func(..) => Type::Func,
             Base::BuiltIn(_) => Type::Func,
+            Base::Type(_) => Type::TypeName,
         }
     }
 }
@@ -76,6 +101,7 @@ impl fmt::Display for Base {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Base::Hashable(h) => write!(f, "{}", h),
+            Base::Type(t) => write!(f, "{}", t),
             // Base::Hashable(Hashable::Boolean(b)) => write!(f, "{}", b),
             // Base::Hashable(Hashable::Str(s)) => write!(f, "\"{}\"", s),
             // Base::Hashable(Hashable::Symbol(s)) => write!(f, "\"{}\"", s),
@@ -178,6 +204,9 @@ impl Evaluator {
     }
 
     fn eval_identifier(&self, env: Env, name: String) -> Result<Base, HestiaErr> {
+        if let Ok(x) = name.parse::<Type>() {
+            return Ok(Base::Type(x.clone()));
+        }
         if let Some(x) = env.get(&name) {
             return Ok(x.clone());
         }
