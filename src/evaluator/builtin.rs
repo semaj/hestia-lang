@@ -289,6 +289,41 @@ pub fn builtins() -> Env {
                 Err(HestiaErr::User(format!("{}", first)))
             },
         },
+        Func {
+            name: "some".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(1),
+            max_args: Some(1),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let first = get_arg(name, 0, &args)?;
+                Ok(Base::Opt(Some(Box::new(first))))
+            },
+        },
+        Func {
+            name: "some?".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(1),
+            max_args: Some(1),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let first = get_arg(name, 0, &args)?;
+                match first {
+                    Base::Opt(None) => Ok(Base::Hashable(Hashable::Boolean(false))),
+                    Base::Opt(Some(_)) => Ok(Base::Hashable(Hashable::Boolean(true))),
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects argument of type Option, got {}",
+                        name,
+                        x.to_type()
+                    ))),
+                }
+            },
+        },
+        Func {
+            name: "none".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(0),
+            max_args: Some(0),
+            f: |_: &str, _: Vec<Base>| -> Result<Base, HestiaErr> { Ok(Base::Opt(None)) },
+        },
     ];
     for func in funcs.into_iter() {
         builtins.insert(func.name.clone(), Base::BuiltIn(func));

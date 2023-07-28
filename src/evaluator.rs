@@ -17,6 +17,7 @@ pub enum Type {
     List,
     Map,
     Func,
+    Opt,
     TypeName,
 }
 
@@ -36,6 +37,7 @@ impl FromStr for Type {
             "List" => Ok(Type::List),
             "Map" => Ok(Type::Map),
             "Func" => Ok(Type::Func),
+            "Option" => Ok(Type::Opt),
             "Type" => Ok(Type::TypeName),
             _ => Err(ParseTypeError),
         }
@@ -53,6 +55,7 @@ impl fmt::Display for Type {
             Type::List => write!(f, "List"),
             Type::Map => write!(f, "Map"),
             Type::Func => write!(f, "Function"),
+            Type::Opt => write!(f, "Option"),
             Type::TypeName => write!(f, "Type"),
         }
     }
@@ -66,6 +69,7 @@ pub enum Base {
     List(Vec<Base>),
     Map(Map<Base>),
     Func(Option<String>, HashMap<String, Base>, Vec<String>, Expr),
+    Opt(Option<Box<Base>>),
     BuiltIn(Func),
 }
 
@@ -91,6 +95,7 @@ impl Base {
             Base::Map(_) => Type::Map,
             Base::Func(..) => Type::Func,
             Base::BuiltIn(_) => Type::Func,
+            Base::Opt(_) => Type::Opt,
             Base::Type(_) => Type::TypeName,
         }
     }
@@ -102,6 +107,8 @@ impl fmt::Display for Base {
         match self {
             Base::Hashable(h) => write!(f, "{}", h),
             Base::Type(t) => write!(f, "{}", t),
+            Base::Opt(None) => write!(f, "<Option (none)>"),
+            Base::Opt(Some(x)) => write!(f, "<Option ({}: {})>", x, x.to_type()),
             // Base::Hashable(Hashable::Boolean(b)) => write!(f, "{}", b),
             // Base::Hashable(Hashable::Str(s)) => write!(f, "\"{}\"", s),
             // Base::Hashable(Hashable::Symbol(s)) => write!(f, "\"{}\"", s),
