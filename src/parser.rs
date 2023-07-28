@@ -211,6 +211,7 @@ impl Parser {
             }
         }
         let body = self.parse()?;
+        self.forward_expect(Token::CloseParen, "let")?;
         Ok(Expr::Let(bindings, Box::new(body)))
     }
 
@@ -238,11 +239,15 @@ impl Parser {
         let next = self.forward()?;
         match next.token {
             Token::Identifier(s) => match s.as_str() {
-                "if" => Ok(Expr::If(
-                    Box::new(self.parse()?),
-                    Box::new(self.parse()?),
-                    Box::new(self.parse()?),
-                )),
+                "if" => {
+                    let result = Ok(Expr::If(
+                        Box::new(self.parse()?),
+                        Box::new(self.parse()?),
+                        Box::new(self.parse()?),
+                    ));
+                    self.forward_expect(Token::CloseParen, "if")?;
+                    result
+                }
                 "def" => {
                     let next = self.forward()?;
                     let s = match next.token {
@@ -254,6 +259,7 @@ impl Parser {
                         )),
                     }?;
                     let body = self.parse()?;
+                    self.forward_expect(Token::CloseParen, "def")?;
                     Ok(Expr::Def(s, Box::new(body)))
                 }
                 "let" => self.parse_let(),
