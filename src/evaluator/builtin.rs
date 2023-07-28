@@ -1,5 +1,5 @@
 use crate::error::HestiaErr;
-use crate::evaluator::{Base, Env};
+use crate::evaluator::{get_arg, Base, Env};
 use crate::parser::Hashable;
 use std::collections::HashMap;
 
@@ -29,45 +29,48 @@ pub fn builtins() -> Env {
             min_args: Some(2),
             max_args: None,
             f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
-                let mut float_sum: f64 = 0.0;
                 let mut int_sum: i64 = 0;
-                let mut float_used = false;
-                let mut int_used = false;
                 for (i, arg) in args.iter().enumerate() {
                     match arg {
                         Base::Hashable(Hashable::Integer(n)) => {
-                            int_used = true;
                             int_sum += n;
-                            if float_used {
-                                return Err(HestiaErr::Runtime(format!(
-                                            "function `{}` received Float arguments up until Integer argument {} ({})",
-                                            name, i, arg.to_type()
-                                            )))
-                            }
-                        }
-                        Base::Float(n) => {
-                            float_used = true;
-                            float_sum += n;
-                            if int_used {
-                                return Err(HestiaErr::Runtime(format!(
-                                            "function `{}` received Integer arguments up until Float argument {} ({})",
-                                            name, i, arg.to_type()
-                                            )))
-                            }
                         }
                         _ => {
                             return Err(HestiaErr::Runtime(format!(
-                                        "function `{}` expects arguments of type Float OR Integer, argument {} is {}",
-                                        name, i, arg.to_type()
-                                        )))
+                            "function `{}` expects arguments of type Integer, argument {} is {}",
+                            name,
+                            i,
+                            arg.to_type()
+                        )))
                         }
                     }
                 }
-                if float_used {
-                    Ok(Base::Float(float_sum))
-                } else {
-                    Ok(Base::Hashable(Hashable::Integer(int_sum)))
+                Ok(Base::Hashable(Hashable::Integer(int_sum)))
+            },
+        },
+        Func {
+            name: "fadd".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(2),
+            max_args: None,
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let mut float_sum: f64 = 0.0;
+                for (i, arg) in args.iter().enumerate() {
+                    match arg {
+                        Base::Float(n) => {
+                            float_sum += n;
+                        }
+                        _ => {
+                            return Err(HestiaErr::Runtime(format!(
+                                "function `{}` expects arguments of type Float, argument {} is {}",
+                                name,
+                                i,
+                                arg.to_type()
+                            )))
+                        }
+                    }
                 }
+                Ok(Base::Float(float_sum))
             },
         },
         Func {
@@ -76,45 +79,48 @@ pub fn builtins() -> Env {
             min_args: Some(2),
             max_args: None,
             f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
-                let mut float_sum: f64 = 0.0;
                 let mut int_sum: i64 = 0;
-                let mut float_used = false;
-                let mut int_used = false;
                 for (i, arg) in args.iter().enumerate() {
                     match arg {
                         Base::Hashable(Hashable::Integer(n)) => {
-                            int_used = true;
                             int_sum -= n;
-                            if float_used {
-                                return Err(HestiaErr::Runtime(format!(
-                                            "function `{}` received Float arguments up until Integer argument {} ({})",
-                                            name, i, arg.to_type()
-                                            )))
-                            }
-                        }
-                        Base::Float(n) => {
-                            float_used = true;
-                            float_sum -= n;
-                            if int_used {
-                                return Err(HestiaErr::Runtime(format!(
-                                            "function `{}` received Integer arguments up until Float argument {} ({})",
-                                            name, i, arg.to_type()
-                                            )))
-                            }
                         }
                         _ => {
                             return Err(HestiaErr::Runtime(format!(
-                                        "function `{}` expects arguments of type Float OR Integer, argument {} is {}",
-                                        name, i, arg.to_type()
-                                        )))
+                                "function `{}` expects Integer arguments, argument {} is {}",
+                                name,
+                                i,
+                                arg.to_type()
+                            )))
                         }
                     }
                 }
-                if float_used {
-                    Ok(Base::Float(float_sum))
-                } else {
-                    Ok(Base::Hashable(Hashable::Integer(int_sum)))
+                Ok(Base::Hashable(Hashable::Integer(int_sum)))
+            },
+        },
+        Func {
+            name: "fsub".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(2),
+            max_args: None,
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let mut float_sum: f64 = 0.0;
+                for (i, arg) in args.iter().enumerate() {
+                    match arg {
+                        Base::Float(n) => {
+                            float_sum -= n;
+                        }
+                        _ => {
+                            return Err(HestiaErr::Runtime(format!(
+                                "function `{}` expects Float arguments, argument {} is {}",
+                                name,
+                                i,
+                                arg.to_type()
+                            )))
+                        }
+                    }
                 }
+                Ok(Base::Float(float_sum))
             },
         },
         Func {
@@ -123,98 +129,136 @@ pub fn builtins() -> Env {
             min_args: Some(2),
             max_args: None,
             f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
-                let mut float_product: f64 = 1.0;
                 let mut int_product: i64 = 1;
-                let mut float_used = false;
-                let mut int_used = false;
                 for (i, arg) in args.iter().enumerate() {
                     match arg {
                         Base::Hashable(Hashable::Integer(n)) => {
-                            int_used = true;
                             int_product *= n;
-                            if float_used {
-                                return Err(HestiaErr::Runtime(format!(
-                                            "function `{}` received Float arguments up until Integer argument {} ({})",
-                                            name, i, arg.to_type()
-                                            )))
-                            }
-                        }
-                        Base::Float(n) => {
-                            float_used = true;
-                            float_product *= n;
-                            if int_used {
-                                return Err(HestiaErr::Runtime(format!(
-                                            "function `{}` received Integer arguments up until Float argument {} ({})",
-                                            name, i, arg.to_type()
-                                            )))
-                            }
                         }
                         _ => {
                             return Err(HestiaErr::Runtime(format!(
-                                        "function `{}` expects arguments of type Float OR Integer, argument {} is {}",
-                                        name, i, arg.to_type()
-                                        )))
+                            "function `{}` expects arguments of type Integer, argument {} is {}",
+                            name,
+                            i,
+                            arg.to_type()
+                        )))
                         }
                     }
                 }
-                if float_used {
-                    Ok(Base::Float(float_product))
-                } else {
-                    Ok(Base::Hashable(Hashable::Integer(int_product)))
+                Ok(Base::Hashable(Hashable::Integer(int_product)))
+            },
+        },
+        Func {
+            name: "fmul".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(2),
+            max_args: None,
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let mut float_product: f64 = 1.0;
+                for (i, arg) in args.iter().enumerate() {
+                    match arg {
+                        Base::Float(n) => {
+                            float_product *= n;
+                        }
+                        _ => {
+                            return Err(HestiaErr::Runtime(format!(
+                                "function `{}` expects arguments of type Float , argument {} is {}",
+                                name,
+                                i,
+                                arg.to_type()
+                            )))
+                        }
+                    }
+                }
+                Ok(Base::Float(float_product))
+            },
+        },
+        Func {
+            name: "div".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(2),
+            max_args: Some(2),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let first = match get_arg(name, 0, &args)? {
+                    Base::Hashable(Hashable::Integer(i)) => Ok(i),
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects first argument to be Integer, got {}",
+                        name,
+                        x.to_type()
+                    ))),
+                }?;
+                let second = match get_arg(name, 1, &args)? {
+                    Base::Hashable(Hashable::Integer(i)) => Ok(i),
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects second argument to be Integer, got {}",
+                        name,
+                        x.to_type()
+                    ))),
+                }?;
+                if second == 0 {
+                    return Err(HestiaErr::Runtime("attempted divide by 0".to_string()));
+                }
+                Ok(Base::Hashable(Hashable::Integer(first / second)))
+            },
+        },
+        Func {
+            name: "fdiv".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(2),
+            max_args: Some(2),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let first = match get_arg(name, 0, &args)? {
+                    Base::Float(f) => Ok(f),
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects first argument to be Float, got {}",
+                        name,
+                        x.to_type()
+                    ))),
+                }?;
+                let second = match get_arg(name, 1, &args)? {
+                    Base::Float(f) => Ok(f),
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects second argument to be Float, got {}",
+                        name,
+                        x.to_type()
+                    ))),
+                }?;
+                if second == 0.0 {
+                    return Err(HestiaErr::Runtime("attempted divide by 0.0".to_string()));
+                }
+                Ok(Base::Float(first / second))
+            },
+        },
+        Func {
+            name: "log".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(2),
+            max_args: Some(2),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let first = match get_arg(name, 0, &args)? {
+                    Base::Hashable(Hashable::Integer(i)) => Ok(i),
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects first argument to be Integer, got {}",
+                        name,
+                        x.to_type()
+                    ))),
+                }?;
+                let second = match get_arg(name, 1, &args)? {
+                    Base::Hashable(Hashable::Integer(i)) => Ok(i),
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects second argument to be Integer, got {}",
+                        name,
+                        x.to_type()
+                    ))),
+                }?;
+                match first.checked_ilog(second) {
+                    Some(x) => Ok(Base::Hashable(Hashable::Integer(x.into()))),
+                    None => Err(HestiaErr::Runtime(
+                        "invalid logarithm arguments".to_string(),
+                    )),
                 }
             },
         },
-        // Func {
-        //     name: "div".to_string(),
-        //     curried_args: Vec::new(),
-        //     min_args: Some(2),
-        //     max_args: Some(2),
-        //     f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
-        //         let first = match get_arg(name, args, 0)? {
-        //             Base::Hashable(Hashable::Integer(i)) => Ok(i),
-        //         }
-        //         let second = get_arg(name, args, 1)?;
-        //         let mut float_product: f64 = 1.0;
-        //         let mut int_product: i64 = 1;
-        //         let mut float_used = false;
-        //         let mut int_used = false;
-        //         for (i, arg) in args.iter().enumerate() {
-        //             match arg {
-        //                 Base::Hashable(Hashable::Integer(n)) => {
-        //                     int_used = true;
-        //                     int_product *= n;
-        //                     if float_used {
-        //                         return Err(HestiaErr::Runtime(format!(
-        //                                     "function `{}` received Float arguments up until Integer argument {} ({})",
-        //                                     name, i, arg.to_type()
-        //                                     )))
-        //                     }
-        //                 }
-        //                 Base::Float(n) => {
-        //                     float_used = true;
-        //                     float_product *= n;
-        //                     if int_used {
-        //                         return Err(HestiaErr::Runtime(format!(
-        //                                     "function `{}` received Integer arguments up until Float argument {} ({})",
-        //                                     name, i, arg.to_type()
-        //                                     )))
-        //                     }
-        //                 }
-        //                 _ => {
-        //                     return Err(HestiaErr::Runtime(format!(
-        //                                 "function `{}` expects arguments of type Float OR Integer, argument {} is {}",
-        //                                 name, i, arg.to_type()
-        //                                 )))
-        //                 }
-        //             }
-        //         }
-        //         if float_used {
-        //             Ok(Base::Float(float_product))
-        //         } else {
-        //             Ok(Base::Hashable(Hashable::Integer(int_product)))
-        //         }
-        //     },
-        // },
     ];
     for func in funcs.into_iter() {
         builtins.insert(func.name.clone(), Base::BuiltIn(func));

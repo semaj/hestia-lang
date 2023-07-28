@@ -16,6 +16,7 @@ pub enum Type {
     List,
     Map,
     Func,
+    // TypeName(Option<Box<Type>>),
 }
 
 impl fmt::Display for Type {
@@ -29,6 +30,7 @@ impl fmt::Display for Type {
             Type::List => write!(f, "List"),
             Type::Map => write!(f, "Map"),
             Type::Func => write!(f, "Function"),
+            // Type::TypeName( => write!(f, "Type"),
         }
     }
 }
