@@ -269,7 +269,7 @@ pub fn builtins() -> Env {
             },
         },
         Func {
-            name: "eq?".to_string(),
+            name: "eq2?".to_string(),
             curried_args: Vec::new(),
             min_args: Some(2),
             max_args: Some(2),
@@ -277,6 +277,16 @@ pub fn builtins() -> Env {
                 let first = get_arg(name, 0, &args)?;
                 let second = get_arg(name, 1, &args)?;
                 Ok(Base::Hashable(Hashable::Boolean(first == second)))
+            },
+        },
+        Func {
+            name: "error".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(1),
+            max_args: Some(1),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let first = get_arg(name, 0, &args)?;
+                Err(HestiaErr::User(format!("{}", first)))
             },
         },
     ];

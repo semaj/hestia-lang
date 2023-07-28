@@ -4,6 +4,7 @@ use std::fmt;
 pub enum HestiaErr {
     Syntax(usize, usize, String),
     Runtime(String),
+    User(String),
     Internal(String),
 }
 
@@ -18,6 +19,9 @@ impl fmt::Display for HestiaErr {
             }
             HestiaErr::Internal(s) => {
                 write!(f, "{}", s)
+            }
+            HestiaErr::User(s) => {
+                write!(f, "user error: {}", s)
             }
         }
     }
