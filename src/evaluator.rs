@@ -210,7 +210,7 @@ impl Evaluator {
                 name, x
             )));
         }
-        let mut evaluated = self.eval(env.clone(), expr)?;
+        let mut evaluated = self.eval(env, expr)?;
         evaluated = match evaluated {
             Base::Func(_, a, b, c) => Base::Func(Some(name.clone()), a, b, c),
             _ => evaluated,
@@ -285,7 +285,7 @@ impl Evaluator {
     }
 
     fn eval_func(&self, env: Env, args: Vec<String>, body: Expr) -> Result<Base, HestiaErr> {
-        Ok(Base::Func(None, env.clone(), args, body))
+        Ok(Base::Func(None, env, args, body))
     }
 
     fn eval_call(&mut self, env: Env, called: Expr, args: Vec<Expr>) -> Result<Base, HestiaErr> {
@@ -301,7 +301,7 @@ impl Evaluator {
                 let mut arguments = VecDeque::from(evaluated_args);
                 let num_args = arguments.len();
                 let mut new_env = local_env.clone();
-                let mut parameters = VecDeque::from(names.clone());
+                let mut parameters = VecDeque::from(names);
                 let num_params = parameters.len();
                 loop {
                     match parameters.pop_front() {
@@ -311,12 +311,7 @@ impl Evaluator {
                             }
                             None => {
                                 parameters.push_front(param);
-                                return Ok(Base::Func(
-                                    name,
-                                    new_env,
-                                    Vec::from(parameters),
-                                    body.clone(),
-                                ));
+                                return Ok(Base::Func(name, new_env, Vec::from(parameters), body));
                             }
                         },
                         None => {
@@ -328,7 +323,7 @@ impl Evaluator {
                                     num_args,
                                 )));
                             } else {
-                                return self.eval(new_env.clone(), body.clone());
+                                return self.eval(new_env.clone(), body);
                             }
                         }
                     }
