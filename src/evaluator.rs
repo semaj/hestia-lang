@@ -7,7 +7,7 @@ use std::collections::{HashMap, VecDeque};
 use std::fmt;
 use std::str::FromStr;
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Type {
     Integer,
     Boolean,

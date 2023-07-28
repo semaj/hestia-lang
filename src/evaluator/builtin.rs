@@ -268,6 +268,17 @@ pub fn builtins() -> Env {
                 Ok(Base::Type(get_arg(name, 0, &args)?.to_type()))
             },
         },
+        Func {
+            name: "eq?".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(2),
+            max_args: Some(2),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let first = get_arg(name, 0, &args)?;
+                let second = get_arg(name, 1, &args)?;
+                Ok(Base::Hashable(Hashable::Boolean(first == second)))
+            },
+        },
     ];
     for func in funcs.into_iter() {
         builtins.insert(func.name.clone(), Base::BuiltIn(func));
