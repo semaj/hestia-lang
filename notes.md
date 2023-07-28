@@ -1,6 +1,5 @@
 TODO:
 
-* Option / Result
 * Modules
-* Basic operations over List/Map
+* format string
 * Splat operator

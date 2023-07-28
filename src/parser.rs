@@ -115,7 +115,13 @@ struct Parser {
 
 pub fn parse(raw: String) -> Result<Expr, HestiaErr> {
     let lexer = Lexer::new(raw.chars().collect());
-    Parser::new(lexer).parse()
+    let mut parser = Parser::new(lexer);
+    let parsed = parser.parse()?;
+    if parser.is_done() {
+        Ok(parsed)
+    } else {
+        Err(HestiaErr::Runtime("dangling tokens".to_string()))
+    }
 }
 
 impl Parser {
@@ -221,6 +227,10 @@ impl Parser {
             }
         }
         Ok(arguments)
+    }
+
+    pub fn is_done(&self) -> bool {
+        self.lexer.is_done()
     }
 
     // Assumes we just parsed an open paren

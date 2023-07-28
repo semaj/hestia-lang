@@ -66,7 +66,7 @@ pub enum Base {
     Type(Type),
     Hashable(Hashable),
     Float(f64),
-    List(Vec<Base>),
+    List(VecDeque<Base>),
     Map(Map<Base>),
     Func(Option<String>, HashMap<String, Base>, Vec<String>, Expr),
     Opt(Option<Box<Base>>),
@@ -101,7 +101,6 @@ impl Base {
     }
 }
 
-// TODO: define type function that converts base to human-readable type
 impl fmt::Display for Base {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -109,9 +108,6 @@ impl fmt::Display for Base {
             Base::Type(t) => write!(f, "{}", t),
             Base::Opt(None) => write!(f, "<Option (none)>"),
             Base::Opt(Some(x)) => write!(f, "<Option ({}: {})>", x, x.to_type()),
-            // Base::Hashable(Hashable::Boolean(b)) => write!(f, "{}", b),
-            // Base::Hashable(Hashable::Str(s)) => write!(f, "\"{}\"", s),
-            // Base::Hashable(Hashable::Symbol(s)) => write!(f, "\"{}\"", s),
             Base::Float(n) => write!(f, "{:?}", n),
             Base::List(v) => {
                 let args: Vec<String> = v.iter().map(|x| format!("{}", x)).collect();
@@ -175,7 +171,7 @@ impl Evaluator {
             Expr::Hashable(h) => Ok(Base::Hashable(h)),
             Expr::Float(n) => Ok(Base::Float(n)),
             Expr::List(v) => {
-                let elements: Result<Vec<Base>, HestiaErr> =
+                let elements: Result<VecDeque<Base>, HestiaErr> =
                     v.into_iter().map(|x| self.eval(env.clone(), x)).collect();
                 Ok(Base::List(elements?))
             }

@@ -1,7 +1,7 @@
 use crate::error::HestiaErr;
 use crate::evaluator::{get_arg, Base, Env};
 use crate::parser::Hashable;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 type F = fn(&str, Vec<Base>) -> Result<Base, HestiaErr>;
 
@@ -230,6 +230,31 @@ pub fn builtins() -> Env {
             },
         },
         Func {
+            name: "mod".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(2),
+            max_args: Some(2),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let first = match get_arg(name, 0, &args)? {
+                    Base::Hashable(Hashable::Integer(i)) => Ok(i),
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects first argument to be Integer, got {}",
+                        name,
+                        x.to_type()
+                    ))),
+                }?;
+                let second = match get_arg(name, 1, &args)? {
+                    Base::Hashable(Hashable::Integer(i)) => Ok(i),
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects second argument to be Integer, got {}",
+                        name,
+                        x.to_type()
+                    ))),
+                }?;
+                Ok(Base::Hashable(Hashable::Integer(first % second)))
+            },
+        },
+        Func {
             name: "log".to_string(),
             curried_args: Vec::new(),
             min_args: Some(2),
@@ -323,6 +348,244 @@ pub fn builtins() -> Env {
             min_args: Some(0),
             max_args: Some(0),
             f: |_: &str, _: Vec<Base>| -> Result<Base, HestiaErr> { Ok(Base::Opt(None)) },
+        },
+        Func {
+            name: "keys".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(1),
+            max_args: Some(1),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                match get_arg(name, 0, &args)? {
+                    Base::Map(m) => {
+                        let mut result: VecDeque<Base> = VecDeque::new();
+                        for (k, _) in m.map.iter() {
+                            result.push_back(Base::Hashable(k.clone()))
+                        }
+                        Ok(Base::List(result))
+                    }
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects argument of type Map, got {}",
+                        name,
+                        x.to_type(),
+                    ))),
+                }
+            },
+        },
+        Func {
+            name: "values".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(1),
+            max_args: Some(1),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                match get_arg(name, 0, &args)? {
+                    Base::Map(m) => {
+                        let mut result: VecDeque<Base> = VecDeque::new();
+                        for (_, v) in m.map.iter() {
+                            result.push_back(v.clone())
+                        }
+                        Ok(Base::List(result))
+                    }
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects argument of type Map, got {}",
+                        name,
+                        x.to_type(),
+                    ))),
+                }
+            },
+        },
+        Func {
+            name: "cons".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(2),
+            max_args: Some(2),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let first = get_arg(name, 0, &args)?;
+                match get_arg(name, 1, &args)? {
+                    Base::List(v) => {
+                        let mut new = v.clone();
+                        new.push_front(first);
+                        Ok(Base::List(new))
+                    }
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects second argument of type List, got {}",
+                        name,
+                        x.to_type(),
+                    ))),
+                }
+            },
+        },
+        Func {
+            name: "first".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(1),
+            max_args: Some(1),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                match get_arg(name, 0, &args)? {
+                    Base::List(v) => match v.get(0) {
+                        Some(x) => Ok(Base::Opt(Some(Box::new(x.clone())))),
+                        None => Ok(Base::Opt(None)),
+                    },
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects argument of type List, got {}",
+                        name,
+                        x.to_type(),
+                    ))),
+                }
+            },
+        },
+        Func {
+            name: "rest".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(1),
+            max_args: Some(1),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                match get_arg(name, 0, &args)? {
+                    Base::List(v) => match v.get(0) {
+                        Some(_) => {
+                            let mut new = v.clone();
+                            new.pop_front();
+                            Ok(Base::List(new))
+                        }
+                        None => Ok(Base::List(VecDeque::new())),
+                    },
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects argument of type List, got {}",
+                        name,
+                        x.to_type(),
+                    ))),
+                }
+            },
+        },
+        Func {
+            name: "unwrap".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(2),
+            max_args: Some(2),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let second = get_arg(name, 1, &args)?;
+                match get_arg(name, 0, &args)? {
+                    Base::Opt(v) => match v {
+                        Some(b) => Ok(*b),
+                        None => Err(HestiaErr::User(format!("{} failed: {}", name, second))),
+                    },
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects first argument of type Option, got {}",
+                        name,
+                        x.to_type(),
+                    ))),
+                }
+            },
+        },
+        Func {
+            name: "at".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(2),
+            max_args: Some(2),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let first = match get_arg(name, 0, &args)? {
+                    Base::Hashable(Hashable::Integer(i)) => Ok(i),
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects first argument of type Integer, got {}",
+                        name,
+                        x.to_type()
+                    ))),
+                }?;
+                let first_conv: usize = match usize::try_from(first) {
+                    Ok(i) => Ok(i),
+                    Err(_) => Err(HestiaErr::Internal(format!(
+                        "function `{}` received invalid index {}",
+                        name, first
+                    ))),
+                }?;
+                match get_arg(name, 1, &args)? {
+                    Base::List(v) => match v.get(first_conv) {
+                        Some(b) => Ok(Base::Opt(Some(Box::new(b.clone())))),
+                        None => Ok(Base::Opt(None)),
+                    },
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects second argument of type List, got {}",
+                        name,
+                        x.to_type(),
+                    ))),
+                }
+            },
+        },
+        Func {
+            name: "get".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(2),
+            max_args: Some(2),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let first = match get_arg(name, 0, &args)? {
+                    Base::Hashable(h) => Ok(h),
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects first argument that is Hashable, got {}",
+                        name,
+                        x.to_type()
+                    ))),
+                }?;
+                match get_arg(name, 1, &args)? {
+                    Base::Map(m) => match m.map.get(&first) {
+                        Some(b) => Ok(Base::Opt(Some(Box::new(b.clone())))),
+                        None => Ok(Base::Opt(None)),
+                    },
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects second argument of type Map, got {}",
+                        name,
+                        x.to_type(),
+                    ))),
+                }
+            },
+        },
+        Func {
+            name: "push".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(2),
+            max_args: Some(2),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let first = get_arg(name, 0, &args)?;
+                match get_arg(name, 1, &args)? {
+                    Base::List(v) => {
+                        let mut new = v.clone();
+                        new.push_back(first);
+                        Ok(Base::List(new))
+                    }
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects second argument of type List, got {}",
+                        name,
+                        x.to_type(),
+                    ))),
+                }
+            },
+        },
+        Func {
+            name: "insert".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(3),
+            max_args: Some(3),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let first = match get_arg(name, 0, &args)? {
+                    Base::Hashable(h) => Ok(h),
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects first argument that is Hashable, got {}",
+                        name,
+                        x.to_type()
+                    ))),
+                }?;
+                let second = get_arg(name, 1, &args)?;
+                match get_arg(name, 2, &args)? {
+                    Base::Map(m) => {
+                        let mut new = m.clone();
+                        new.map.insert(first, second);
+                        Ok(Base::Map(new))
+                    }
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects second argument of type List, got {}",
+                        name,
+                        x.to_type(),
+                    ))),
+                }
+            },
         },
     ];
     for func in funcs.into_iter() {
