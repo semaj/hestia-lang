@@ -59,7 +59,7 @@ pub enum Expr {
     And(Vec<Expr>),
     Or(Vec<Expr>),
     If(Box<Expr>, Box<Expr>, Box<Expr>),
-    Func(Vec<String>, Box<Expr>),
+    Func(Option<String>, Vec<String>, Box<Expr>),
     Call(Box<Expr>, Vec<Expr>),
     Let(Vec<(String, Expr)>, Box<Expr>),
     Def(String, Box<Expr>),
@@ -91,7 +91,13 @@ impl fmt::Display for Expr {
                 write!(f, "(or {})", args.join(" "))
             }
             Expr::If(a, b, c) => write!(f, "(if {} {} {})", a, b, c),
-            Expr::Func(v, body) => write!(f, "{{|{}| {} }}", v.join(" "), body),
+            Expr::Func(splat, v, body) => {
+                let splat_str = match splat {
+                    Some(s) => format!(" *{}", s),
+                    None => "".to_string(),
+                };
+                write!(f, "{{|{}{}| {} }}", v.join(" "), splat_str, body)
+            }
             Expr::Call(called, v) => {
                 let args: Vec<String> = v.iter().map(|x| format!("{}", x)).collect();
                 write!(f, "({} {})", called, args.join(" "))
@@ -341,11 +347,35 @@ impl Parser {
     fn parse_function(&mut self) -> Result<Expr, HestiaErr> {
         self.forward_expect(Token::Closeable(Closeable::Pipe), "function")?;
         let mut arguments = Vec::new();
+        let mut splat = None;
         loop {
             let next = self.forward()?;
             match next.token {
                 Token::Closeable(Closeable::Pipe) => break,
-                Token::Identifier(s) => arguments.push(s),
+                Token::Identifier(s) => {
+                    if s.starts_with("*") {
+                        if s.len() == 1 {
+                            return Err(HestiaErr::Syntax(
+                                next.line,
+                                next.col_start,
+                                format!("splat parameter must be length > 1, got {}", s),
+                            ));
+                        }
+                        if splat.is_some() {
+                            return Err(HestiaErr::Syntax(
+                                next.line,
+                                next.col_start,
+                                format!("expected no arguments after splat, got {}", s),
+                            ));
+                        } else {
+                            let mut s_copy = s.clone();
+                            s_copy.remove(0);
+                            splat = Some(s_copy);
+                        }
+                    } else {
+                        arguments.push(s)
+                    }
+                }
                 _ => {
                     return Err(HestiaErr::Syntax(
                         next.line,
@@ -360,7 +390,7 @@ impl Parser {
         }
         let body = self.parse()?;
         self.forward_expect(Token::CloseSquigglyParen, "function")?;
-        Ok(Expr::Func(arguments, Box::new(body)))
+        Ok(Expr::Func(splat, arguments, Box::new(body)))
     }
 
     pub fn parse(&mut self) -> Result<Expr, HestiaErr> {

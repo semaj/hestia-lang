@@ -68,7 +68,13 @@ pub enum Base {
     Float(f64),
     List(VecDeque<Base>),
     Map(Map<Base>),
-    Func(Option<String>, HashMap<String, Base>, Vec<String>, Expr),
+    Func(
+        Option<String>, // name
+        Option<String>, // splat
+        HashMap<String, Base>,
+        Vec<String>,
+        Expr,
+    ),
     Opt(Option<Box<Base>>),
     BuiltIn(Func),
 }
@@ -127,12 +133,17 @@ impl fmt::Display for Base {
                 }
                 write!(f, "}}")
             }
-            Base::Func(name, _, args, body) => {
+            Base::Func(name, splat, _, args, body) => {
+                let splat_str = match splat {
+                    Some(s) => format!(" *{}", s),
+                    None => "".to_string(),
+                };
                 write!(
                     f,
-                    "closure {}: {{ |{}| {} }}",
+                    "closure {}: {{ |{}{}| {} }}",
                     name.clone().unwrap_or("<anonymous>".to_string()),
                     args.join(" "),
+                    splat_str,
                     body
                 )
             }
@@ -199,7 +210,7 @@ impl Evaluator {
             Expr::And(v) => self.eval_and(env, v),
             Expr::Or(v) => self.eval_or(env, v),
             Expr::If(c, i, e) => self.eval_if(env, *c, *i, *e),
-            Expr::Func(v, b) => self.eval_func(env, v, *b),
+            Expr::Func(splat, v, b) => self.eval_func(env, splat, v, *b),
             Expr::Call(f, v) => self.eval_call(env, *f, v),
             Expr::Let(v, b) => self.eval_let(env, v, *b),
             Expr::Def(n, e) => self.eval_def(env, n, *e),
@@ -260,7 +271,7 @@ impl Evaluator {
         }
         let mut evaluated = self.eval(env, expr)?;
         evaluated = match evaluated {
-            Base::Func(_, a, b, c) => Base::Func(Some(name.clone()), a, b, c),
+            Base::Func(_, s, a, b, c) => Base::Func(Some(name.clone()), s, a, b, c),
             _ => evaluated,
         };
         self.defs.insert(name, evaluated.clone());
@@ -332,8 +343,14 @@ impl Evaluator {
         }
     }
 
-    fn eval_func(&self, env: Env, args: Vec<String>, body: Expr) -> Result<Base, HestiaErr> {
-        Ok(Base::Func(None, env, args, body))
+    fn eval_func(
+        &self,
+        env: Env,
+        splat: Option<String>,
+        args: Vec<String>,
+        body: Expr,
+    ) -> Result<Base, HestiaErr> {
+        Ok(Base::Func(None, splat, env, args, body))
     }
 
     fn eval_call(&mut self, env: Env, called: Expr, args: Vec<Expr>) -> Result<Base, HestiaErr> {
@@ -345,7 +362,7 @@ impl Evaluator {
         let evaluated_args = result?;
         match evaluated_called {
             // Automatic currying
-            Base::Func(name, local_env, names, body) => {
+            Base::Func(name, splat, local_env, names, body) => {
                 let mut arguments = VecDeque::from(evaluated_args);
                 let num_args = arguments.len();
                 let mut new_env = local_env.clone();
@@ -359,20 +376,38 @@ impl Evaluator {
                             }
                             None => {
                                 parameters.push_front(param);
-                                return Ok(Base::Func(name, new_env, Vec::from(parameters), body));
+                                return Ok(Base::Func(
+                                    name,
+                                    splat,
+                                    new_env,
+                                    Vec::from(parameters),
+                                    body,
+                                ));
                             }
                         },
                         None => {
                             if !arguments.is_empty() {
-                                return Err(HestiaErr::Runtime(format!(
-                                    "function `{}` expects {} arguments, received {}",
-                                    name.unwrap_or("<anonymous>".to_string()),
-                                    num_params,
-                                    num_args,
-                                )));
+                                match splat.clone() {
+                                    Some(s) => {
+                                        let l = Base::List(arguments.clone());
+                                        new_env.insert(s, l);
+                                    }
+                                    None => {
+                                        return Err(HestiaErr::Runtime(format!(
+                                            "function `{}` expects {} arguments, received {}",
+                                            name.unwrap_or("<anonymous>".to_string()),
+                                            num_params,
+                                            num_args,
+                                        )));
+                                    }
+                                }
                             } else {
-                                return self.eval(new_env.clone(), body);
+                                if let Some(s) = splat.clone() {
+                                    let l = Base::List(VecDeque::new());
+                                    new_env.insert(s, l);
+                                }
                             }
+                            return self.eval(new_env.clone(), body);
                         }
                     }
                 }
