@@ -353,19 +353,19 @@ impl Parser {
             match next.token {
                 Token::Closeable(Closeable::Pipe) => break,
                 Token::Identifier(s) => {
-                    if s.starts_with("*") {
+                if splat.is_some() {
+                    return Err(HestiaErr::Syntax(
+                        next.line,
+                        next.col_start,
+                        format!("expected no arguments after splat, got {}", s),
+                    ));
+                }
+                    if s.starts_with('*') {
                         if s.len() == 1 {
                             return Err(HestiaErr::Syntax(
                                 next.line,
                                 next.col_start,
                                 format!("splat parameter must be length > 1, got {}", s),
-                            ));
-                        }
-                        if splat.is_some() {
-                            return Err(HestiaErr::Syntax(
-                                next.line,
-                                next.col_start,
-                                format!("expected no arguments after splat, got {}", s),
                             ));
                         } else {
                             let mut s_copy = s.clone();
@@ -489,6 +489,7 @@ mod test {
             (
                 "{|x y z| (add x y z) }",
                 Expr::Func(
+                    None,
                     vec!["x".to_string(), "y".to_string(), "z".to_string()],
                     Box::new(Expr::Call(
                         Box::new(Expr::Identifier("add".to_string())),

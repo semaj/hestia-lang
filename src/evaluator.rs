@@ -401,11 +401,9 @@ impl Evaluator {
                                         )));
                                     }
                                 }
-                            } else {
-                                if let Some(s) = splat.clone() {
-                                    let l = Base::List(VecDeque::new());
-                                    new_env.insert(s, l);
-                                }
+                            } else if let Some(s) = splat.clone() {
+                                let l = Base::List(VecDeque::new());
+                                new_env.insert(s, l);
                             }
                             return self.eval(new_env.clone(), body);
                         }
