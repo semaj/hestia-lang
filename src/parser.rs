@@ -353,13 +353,13 @@ impl Parser {
             match next.token {
                 Token::Closeable(Closeable::Pipe) => break,
                 Token::Identifier(s) => {
-                if splat.is_some() {
-                    return Err(HestiaErr::Syntax(
-                        next.line,
-                        next.col_start,
-                        format!("expected no arguments after splat, got {}", s),
-                    ));
-                }
+                    if splat.is_some() {
+                        return Err(HestiaErr::Syntax(
+                            next.line,
+                            next.col_start,
+                            format!("expected no arguments after splat, got {}", s),
+                        ));
+                    }
                     if s.starts_with('*') {
                         if s.len() == 1 {
                             return Err(HestiaErr::Syntax(
