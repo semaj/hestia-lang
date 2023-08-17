@@ -137,7 +137,14 @@ impl fmt::Display for Base {
 pub fn evaluate(raw: String) -> Result<Base, HestiaErr> {
     let parsed = parse(raw)?;
     let mut evaluator = Evaluator::new();
-    evaluator.eval(HashMap::new(), parsed)
+    let mut result = Vec::new();
+    for expr in parsed {
+        result.push(evaluator.eval(HashMap::new(), expr)?);
+    }
+    result
+        .last()
+        .ok_or(HestiaErr::Runtime("empty expression".to_string()))
+        .cloned()
 }
 
 type Env = HashMap<String, Base>;

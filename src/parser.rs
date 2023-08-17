@@ -113,14 +113,15 @@ struct Parser {
     cursor: usize,
 }
 
-pub fn parse(raw: String) -> Result<Expr, HestiaErr> {
-    let lexer = Lexer::new(raw.chars().collect());
+pub fn parse(raw: String) -> Result<Vec<Expr>, HestiaErr> {
+    let lexer = Lexer::new(raw.trim().chars().collect());
     let mut parser = Parser::new(lexer);
-    let parsed = parser.parse()?;
-    if parser.is_done() {
-        Ok(parsed)
-    } else {
-        Err(HestiaErr::Runtime("dangling tokens".to_string()))
+    let mut result = Vec::new();
+    loop {
+        result.push(parser.parse()?);
+        if parser.is_done() {
+            return Ok(result);
+        }
     }
 }
 
@@ -496,7 +497,7 @@ mod test {
         ];
         for case in cases {
             let got = parse(case.0.to_string());
-            assert_eq!(Ok(case.1), got, "{}", case.0);
+            assert_eq!(Ok(vec![case.1]), got, "{}", case.0);
         }
     }
 }

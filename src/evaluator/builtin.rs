@@ -20,6 +20,16 @@ impl PartialEq<Func> for Func {
     }
 }
 
+fn usize_to_integer(u: usize) -> Result<Base, HestiaErr> {
+    match u.try_into() {
+        Ok(i) => Ok(Base::Hashable(Hashable::Integer(i))),
+        Err(e) => Err(HestiaErr::Runtime(format!(
+            "failed to convert {} into i64: {}",
+            u, e
+        ))),
+    }
+}
+
 pub fn builtins() -> Env {
     let mut builtins: Env = HashMap::new();
     let funcs = vec![
@@ -533,6 +543,22 @@ pub fn builtins() -> Env {
                         "function `{}` expects second argument of type Map, got {}",
                         name,
                         x.to_type(),
+                    ))),
+                }
+            },
+        },
+        Func {
+            name: "len".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(1),
+            max_args: Some(1),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                match get_arg(name, 0, &args)? {
+                    Base::List(l) => Ok(usize_to_integer(l.len())?),
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects first argument of type List, got {}",
+                        name,
+                        x.to_type()
                     ))),
                 }
             },
