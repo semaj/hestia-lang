@@ -1,0 +1,11 @@
+(def empty? { |list| (eq2? (len list) 0) })
+
+(def apply { |f args|
+  (if (empty? args)
+      (f)
+
+(def eq? { |a *x|
+  (if (eq2? (len x) 0)
+      true
+      (and (eq2? a (first x))
+           (eq? (first x) *(rest x))))})

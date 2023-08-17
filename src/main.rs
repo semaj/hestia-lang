@@ -33,7 +33,7 @@ fn main() -> rustyline::Result<()> {
             }
         }
     }
-    let filename = "stdlib/list.hea";
+    let filename = "stdlib/base.hea";
     match load(&mut evaluator, filename) {
         Ok(_) => {}
         Err(e) => {
