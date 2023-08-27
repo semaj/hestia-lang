@@ -585,6 +585,26 @@ pub fn builtins() -> Env {
             },
         },
         Func {
+            name: "lreverse".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(1),
+            max_args: Some(1),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                match get_arg(name, 0, &args)? {
+                    Base::List(l) => {
+                        let mut lc = l.clone();
+                        lc.make_contiguous().reverse();
+                        Ok(Base::List(lc))
+                    }
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects first argument of type List, got {}",
+                        name,
+                        x.to_type()
+                    ))),
+                }
+            },
+        },
+        Func {
             name: "size".to_string(),
             curried_args: Vec::new(),
             min_args: Some(1),
@@ -644,6 +664,75 @@ pub fn builtins() -> Env {
                     }
                     x => Err(HestiaErr::Runtime(format!(
                         "function `{}` expects second argument of type List, got {}",
+                        name,
+                        x.to_type(),
+                    ))),
+                }
+            },
+        },
+        Func {
+            name: "split".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(2),
+            max_args: Some(2),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let delimiter = match get_arg(name, 0, &args)? {
+                    Base::Hashable(Hashable::Str(s)) => Ok(s),
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects first argument of type String, got {}",
+                        name,
+                        x.to_type()
+                    ))),
+                }?;
+                match get_arg(name, 1, &args)? {
+                    Base::Hashable(Hashable::Str(s)) => {
+                        let mut vd = VecDeque::new();
+                        for part in s.split(&delimiter) {
+                            if !part.is_empty() {
+                                vd.push_back(Base::Hashable(Hashable::Str(part.to_string())));
+                            }
+                        }
+                        Ok(Base::List(vd))
+                    }
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects second argument of type String, got {}",
+                        name,
+                        x.to_type(),
+                    ))),
+                }
+            },
+        },
+        Func {
+            name: "join".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(2),
+            max_args: Some(2),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let delimiter = match get_arg(name, 0, &args)? {
+                    Base::Hashable(Hashable::Str(s)) => Ok(s),
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects first argument of type String, got {}",
+                        name,
+                        x.to_type()
+                    ))),
+                }?;
+                match get_arg(name, 1, &args)? {
+                    Base::List(l) => {
+                        let mut v = Vec::new();
+                        for item in l {
+                            match item {
+                                Base::Hashable(Hashable::Str(s)) => v.push(s),
+                                x => return Err(HestiaErr::Runtime(format!(
+                                    "function `{}` expects second argument of type List of String, encountered element of type {}",
+                                    name,
+                                    x.to_type()
+                                ))),
+                            }
+                        }
+                        Ok(Base::Hashable(Hashable::Str(v.join(&delimiter))))
+                    }
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects second argument of type String, got {}",
                         name,
                         x.to_type(),
                     ))),

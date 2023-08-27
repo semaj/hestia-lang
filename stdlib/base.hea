@@ -37,3 +37,7 @@
               (lmap {|x| (add 1 x)})
               (lreduce 0 {|acc x| (add acc x)})
             ]))
+
+(def sreverse { |s| (>> s [(split "") lreverse (join "")]) })
+
+(test "dcba" (sreverse "abcd"))
