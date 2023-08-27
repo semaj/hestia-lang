@@ -763,6 +763,30 @@ pub fn builtins() -> Env {
                 }
             },
         },
+        Func {
+            name: "write-file".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(2),
+            max_args: Some(2),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let file_name = match get_arg(name, 0, &args)? {
+                    Base::Hashable(Hashable::Str(s)) => Ok(s),
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects first argument of type String, got {}",
+                        name,
+                        x.to_type()
+                    ))),
+                }?;
+                let to_write = get_arg(name, 1, &args)?;
+                match fs::write(&file_name, to_write.print()) {
+                    Ok(_) => Ok(to_write),
+                    Err(e) => Err(HestiaErr::Runtime(format!(
+                        "failed writing to file {}: {}",
+                        file_name, e
+                    ))),
+                }
+            },
+        },
     ];
     for func in funcs.into_iter() {
         builtins.insert(func.name.clone(), Base::BuiltIn(func));
