@@ -2,6 +2,7 @@ use crate::error::HestiaErr;
 use crate::evaluator::{get_arg, Base, Env};
 use crate::parser::Hashable;
 use std::collections::{HashMap, VecDeque};
+use std::fs;
 
 type F = fn(&str, Vec<Base>) -> Result<Base, HestiaErr>;
 
@@ -735,6 +736,29 @@ pub fn builtins() -> Env {
                         "function `{}` expects second argument of type String, got {}",
                         name,
                         x.to_type(),
+                    ))),
+                }
+            },
+        },
+        Func {
+            name: "read-file".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(1),
+            max_args: Some(1),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let file_name = match get_arg(name, 0, &args)? {
+                    Base::Hashable(Hashable::Str(s)) => Ok(s),
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects first argument of type String, got {}",
+                        name,
+                        x.to_type()
+                    ))),
+                }?;
+                match fs::read_to_string(&file_name) {
+                    Ok(s) => Ok(Base::Hashable(Hashable::Str(s))),
+                    Err(e) => Err(HestiaErr::Runtime(format!(
+                        "failed reading file {}: {}",
+                        file_name, e
                     ))),
                 }
             },
