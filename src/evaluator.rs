@@ -99,6 +99,13 @@ impl Base {
             Base::Type(_) => Type::TypeName,
         }
     }
+
+    fn print(&self) -> String {
+        match self {
+            Base::Hashable(Hashable::Str(s)) => s.to_string(),
+            other => format!("{}", other),
+        }
+    }
 }
 
 impl fmt::Display for Base {

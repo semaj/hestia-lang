@@ -304,24 +304,36 @@ pub fn builtins() -> Env {
             },
         },
         Func {
-            name: "eq2?".to_string(),
+            name: "eq?".to_string(),
             curried_args: Vec::new(),
             min_args: Some(2),
-            max_args: Some(2),
+            max_args: None,
             f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
                 let first = get_arg(name, 0, &args)?;
                 let second = get_arg(name, 1, &args)?;
-                Ok(Base::Hashable(Hashable::Boolean(first == second)))
+                if first != second {
+                    return Ok(Base::Hashable(Hashable::Boolean(false)));
+                }
+                for i in 2..args.len() {
+                    let arg = get_arg(name, i, &args)?;
+                    if arg != second {
+                        return Ok(Base::Hashable(Hashable::Boolean(false)));
+                    }
+                }
+                Ok(Base::Hashable(Hashable::Boolean(true)))
             },
         },
         Func {
             name: "error".to_string(),
             curried_args: Vec::new(),
             min_args: Some(1),
-            max_args: Some(1),
+            max_args: None,
             f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
-                let first = get_arg(name, 0, &args)?;
-                Err(HestiaErr::User(format!("{}", first)))
+                let mut formatted = vec![get_arg(name, 0, &args)?.print()];
+                for i in 1..args.len() {
+                    formatted.push(get_arg(name, i, &args)?.print());
+                }
+                Err(HestiaErr::User(formatted.join("")))
             },
         },
         Func {
@@ -432,8 +444,11 @@ pub fn builtins() -> Env {
             f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
                 match get_arg(name, 0, &args)? {
                     Base::List(v) => match v.get(0) {
-                        Some(x) => Ok(Base::Opt(Some(Box::new(x.clone())))),
-                        None => Ok(Base::Opt(None)),
+                        Some(b) => Ok(b.clone()),
+                        None => Err(HestiaErr::Runtime(format!(
+                            "attempting to call `{}` on an empty List",
+                            name
+                        ))),
                     },
                     x => Err(HestiaErr::Runtime(format!(
                         "function `{}` expects argument of type List, got {}",
@@ -509,8 +524,11 @@ pub fn builtins() -> Env {
                 }?;
                 match get_arg(name, 1, &args)? {
                     Base::List(v) => match v.get(first_conv) {
-                        Some(b) => Ok(Base::Opt(Some(Box::new(b.clone())))),
-                        None => Ok(Base::Opt(None)),
+                        Some(b) => Ok(b.clone()),
+                        None => Err(HestiaErr::Runtime(format!(
+                            "attempting to call `{}` on an empty List",
+                            name
+                        ))),
                     },
                     x => Err(HestiaErr::Runtime(format!(
                         "function `{}` expects second argument of type List, got {}",
@@ -536,8 +554,11 @@ pub fn builtins() -> Env {
                 }?;
                 match get_arg(name, 1, &args)? {
                     Base::Map(m) => match m.map.get(&first) {
-                        Some(b) => Ok(Base::Opt(Some(Box::new(b.clone())))),
-                        None => Ok(Base::Opt(None)),
+                        Some(b) => Ok(b.clone()),
+                        None => Err(HestiaErr::Runtime(format!(
+                            "attempting to call `{}` on an empty Map",
+                            name
+                        ))),
                     },
                     x => Err(HestiaErr::Runtime(format!(
                         "function `{}` expects second argument of type Map, got {}",
@@ -557,6 +578,22 @@ pub fn builtins() -> Env {
                     Base::List(l) => Ok(usize_to_integer(l.len())?),
                     x => Err(HestiaErr::Runtime(format!(
                         "function `{}` expects first argument of type List, got {}",
+                        name,
+                        x.to_type()
+                    ))),
+                }
+            },
+        },
+        Func {
+            name: "size".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(1),
+            max_args: Some(1),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                match get_arg(name, 0, &args)? {
+                    Base::Map(m) => Ok(usize_to_integer(m.map.len())?),
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects first argument of type Map, got {}",
                         name,
                         x.to_type()
                     ))),

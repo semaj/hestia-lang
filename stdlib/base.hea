@@ -1,11 +1,39 @@
-(def empty? { |list| (eq2? (len list) 0) })
+(def test { |expected got|
+  (if (eq? expected got)
+      true
+      (error "test failure: expected " expected " got " got))})
+
+(def empty? { |list| (eq? (len list) 0) })
 
 (def apply { |f args|
   (if (empty? args)
       (f)
+      (if (eq? (len args) 1)
+          (f (first args))
+          (apply (f (first args)) (rest args))))})
 
-(def eq? { |a *x|
-  (if (eq2? (len x) 0)
-      true
-      (and (eq2? a (first x))
-           (eq? (first x) *(rest x))))})
+(def >> { |value fs|
+  (if (empty? fs)
+      value
+      (>> ((first fs) value) (rest fs)))})
+
+(def lmap { |f list|
+  (if (empty? list)
+      []
+      (cons (f (first list))
+            (lmap f (rest list))))})
+
+(test [2 3 4] (lmap {|x| (add 1 x)} [1 2 3]))
+
+(def lreduce { |acc f list|
+  (if (empty? list)
+      acc
+      (lreduce (f acc (first list)) f (rest list)))})
+
+(test 6 (lreduce 0 {|acc x| (add acc x)} [1 2 3]))
+
+(test 9 (>> [1 2 3]
+            [
+              (lmap {|x| (add 1 x)})
+              (lreduce 0 {|acc x| (add acc x)})
+            ]))
