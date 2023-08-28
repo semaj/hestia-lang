@@ -175,6 +175,16 @@ impl Evaluator {
         }
     }
 
+    pub fn simple() -> Result<Self, HestiaErr> {
+        let mut n = Self::new();
+        let s = std::include_str!("../stdlib/base.hea");
+        let parsed = parse(s.to_string())?;
+        for expr in parsed {
+            n.eval_top(expr)?;
+        }
+        Ok(n)
+    }
+
     // Could eval def differently when top and when not
     pub fn eval_top(&mut self, expr: Expr) -> Result<Base, HestiaErr> {
         self.eval(HashMap::new(), expr)

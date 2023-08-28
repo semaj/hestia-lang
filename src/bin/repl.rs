@@ -1,18 +1,13 @@
-// use std::fmt;
-pub mod error;
-pub mod evaluator;
-pub mod lexer;
-pub mod parser;
+use hestia::*;
 
-use error::HestiaErr;
 use rustyline::error::ReadlineError;
 use rustyline::DefaultEditor;
 use std::{env, fs};
 
-fn load(evaluator: &mut evaluator::Evaluator, filename: &str) -> Result<(), HestiaErr> {
+fn load(evaluator: &mut evaluator::Evaluator, filename: &str) -> Result<(), error::HestiaErr> {
     let contents = match fs::read_to_string(filename) {
         Ok(s) => Ok(s),
-        Err(e) => Err(HestiaErr::Runtime(format!("{}", e))),
+        Err(e) => Err(error::HestiaErr::Runtime(format!("{}", e))),
     }?;
     let parsed = parser::parse(contents)?;
     for expr in parsed {
