@@ -1,0 +1,12 @@
+[package]
+name = "hestia-site"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+hestia_lib = { path = "../lib" }
+lazy_static = "1.4.0"
+wasm-bindgen = "0.2"

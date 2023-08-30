@@ -175,7 +175,7 @@ impl Evaluator {
         }
     }
 
-    pub fn simple() -> Result<Self, HestiaErr> {
+    pub fn loaded() -> Result<Self, HestiaErr> {
         let mut n = Self::new();
         let s = std::include_str!("../stdlib/base.hea");
         let parsed = parse(s.to_string())?;

@@ -1,4 +1,4 @@
-use hestia::*;
+use hestia_lib::*;
 
 use rustyline::error::ReadlineError;
 use rustyline::DefaultEditor;
@@ -17,7 +17,13 @@ fn load(evaluator: &mut evaluator::Evaluator, filename: &str) -> Result<(), erro
 }
 
 fn main() -> rustyline::Result<()> {
-    let mut evaluator = evaluator::Evaluator::new();
+    let mut evaluator = match evaluator::Evaluator::loaded() {
+        Ok(evalr) => evalr,
+        Err(e) => {
+            eprintln!("failed to load stdlib: {}", e);
+            return Ok(());
+        }
+    };
     let args: Vec<String> = env::args().collect();
     if let Some(s) = args.get(1) {
         match load(&mut evaluator, s) {
@@ -26,14 +32,6 @@ fn main() -> rustyline::Result<()> {
                 eprintln!("error loading file {}: {}", s, e);
                 return Ok(());
             }
-        }
-    }
-    let filename = "stdlib/base.hea";
-    match load(&mut evaluator, filename) {
-        Ok(_) => {}
-        Err(e) => {
-            eprintln!("error loading stdlib file {}: {}", filename, e);
-            return Ok(());
         }
     }
 

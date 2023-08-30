@@ -1,1 +1,0 @@
-(def empty? { |list| (eq2? (len list) 0) })
