@@ -5,12 +5,135 @@
     <title>hello-wasm example</title>
   </head>
   <body>
-    <script type="module">
-      import init, { ev } from "./pkg/hestia_site.js";
-      init().then(() => {
-        alert(ev('(empty? [1 2])'));
-      });
-    </script>
+    <div id="container">
+      <h1>Hestia: A Comfy Programming Language</h1>
+      <p><b>Hestia</b> (pronounced <b><i>HES-ti-a</i></b> or <b><i>es-TI-a</i></b>) is a small, functional, dynamically typed programming language designed for writing small scripts. It can be learned in an afternoon, but is not especially fast or especially general-purpose. It is written in Rust. <a href="https://github.com/semaj/hestia-lang/tree/main/lib/src">Here</a> is the source code.</p>
+      <p><b>Current Features:</b>
+        <ul>
+          <li>A REPL</li>
+          <li>Immutable-only data structures</li>
+          <li>Simple syntax and control flow (no loops, recursion only)</li>
+          <li>No user-defined types</li>
+          <li>No macros</li>
+          <li>Automatic function currying</li>
+        </ul>
+      </p>
+      <p><b>Planned features:</b>
+        <ul>
+          <li>A fully-featured, smarter REPL</li>
+          <li>Readable, batteries-included standard library</li>
+          <li>First-class regular expressions</li>
+          <li>Embeddability (in Rust)</li>
+          <li>First-class debugger (like Ruby's pry)</li>
+        </ul>
+      </p>
+      <p>I designed it to make me happy, but maybe it will make you happy too. Some example expressions:</p>
+      <code>
+      <pre>
+# a comment
+
+1 # => the Integer 1
+
+1,000 => the Integer 1000 (commas are whitespace)
+
+1.0 # => the Float 1.0
+
+true # => the Boolean true
+
+'aaa # => the Symbol 'aaa
+
+"aaa" # => the String "aaa"
+
+[1 1.0 true 'aaa "aaa"] # => a List
+
+(cons 1 []) # => the List [1]
+
+{ a: 2 } # => a Map from the Symbol 'a to the Integer 2
+
+{ |x| (mul x x) } # => a Function (lexically-scoped closure)
+
+(def square { |x| (mul x x) }) # a global binding
+
+(def square-and-sum { |list|
+  (let ([squared (lmap square list)]) # a local binding
+     (lreduce 0 add squared))})
+
+(square-and-sum [1 2 3]) # a Function call => 14
+
+(def some-map { a: 1, b: 2 })
+
+(insert 'c 3 some-map) # => { 'a: 1 'b: 2 'c: 3}
+
+some-map # => { 'a: 1 b: 2 }
+      </pre>
+      </code>
+      <p>Below is a Hestia REPL running in the browser via WebAssembly. Try it!</p>
+      <div id="repl">
+        <span id="result"></span>
+        <span id="prompt">hestia&#62;</span>
+        <input id="prompt-input"></input>
+      </div>
+    </div>
   </body>
+  <script type="module">
+    import init, { ev } from "./pkg/hestia_site.js";
+    var history = [];
+    var index = 0;
+    init().then(() => {
+    });
+    document.getElementById("prompt-input")
+      .addEventListener("keyup", function(event) {
+        event.preventDefault();
+        if (event.keyCode === 13) {
+            let inputValue = document.getElementById("prompt-input").value;
+            let result = ev(inputValue);
+            history.push(`hestia> ${inputValue}\n=> ${result}\n`); index++; document.getElementById("result").innerText = history.join("");
+            var element = document.getElementById("repl");
+            element.scrollTop = element.scrollHeight;
+            document.getElementById("prompt-input").value = "";
+        }
+        // if (event.keyCode === 38) { // up
+        //   if (index > 0) {
+        //     document.getElementById("prompt-input").value = history.
+        //   }
+        // }
+    });
+  </script>
+  <style>
+    h1, h2 , h3, h4 {
+      text-align: center;
+    }
+    #container {
+      font-family: sans-serif;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #repl {
+      padding: 1%;
+      background: lightgrey;
+      font-family: monospace;
+      height: 200px;
+      overflow-y:auto;
+      flex-direction: column-reverse;
+    }
+    #prompt-input {
+      background: lightgrey;
+      font-family: monospace;
+      width: 90%;
+    }
+    input {
+      border: none;
+    }
+    textarea:focus, input:focus{
+      outline: none;
+    }
+    <!-- pre { -->
+    <!--   max-width: 500px; -->
+    <!--   margin-left: auto; -->
+    <!--   margin-right: auto; -->
+    <!-- } -->
+
+  </style>
 </html>
 
