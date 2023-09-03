@@ -2,12 +2,14 @@
 <html lang="en-US">
   <head>
     <meta charset="utf-8" />
-    <title>hello-wasm example</title>
+    <title>Hestia Programming Language</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
   </head>
   <body>
     <div id="container">
       <h1>Hestia: A Comfy Programming Language</h1>
-      <p><b>Hestia</b> (pronounced <b><i>HES-ti-a</i></b> or <b><i>es-TI-a</i></b>) is a small, functional, dynamically typed programming language designed for writing small scripts. It can be learned in an afternoon, but is not especially fast or especially general-purpose. It is written in Rust. <a href="https://github.com/semaj/hestia-lang/tree/main/lib/src">Here</a> is the source code.</p>
+      <p><img src="fire.png" id="fire"></img>
+      <p><b>Hestia</b> (pronounced <b><i>HES-ti-a</i></b> or <b><i>es-TI-a</i></b>) is a small, functional, dynamically typed programming language designed for writing small scripts. It can be learned in an afternoon, but is not especially fast or especially general-purpose. Hestia is written in Rust and <a href="https://github.com/semaj/hestia-lang/tree/main/lib/src">free and open source</a> under the MIT license.</p>
       <p><b>Current Features:</b>
         <ul>
           <li>A REPL</li>
@@ -111,14 +113,14 @@ some-map # => { 'a: 1 b: 2 }
     }
     #repl {
       padding: 1%;
-      background: lightgrey;
+      background: lightgreen;
       font-family: monospace;
       height: 200px;
       overflow-y:auto;
       flex-direction: column-reverse;
     }
     #prompt-input {
-      background: lightgrey;
+      background: lightgreen;
       font-family: monospace;
       width: 90%;
     }
@@ -128,11 +130,12 @@ some-map # => { 'a: 1 b: 2 }
     textarea:focus, input:focus{
       outline: none;
     }
-    <!-- pre { -->
-    <!--   max-width: 500px; -->
-    <!--   margin-left: auto; -->
-    <!--   margin-right: auto; -->
-    <!-- } -->
+    #fire {
+      margin-left: auto;
+      margin-right: auto;
+      text-align: center;
+      display: block;
+    }
 
   </style>
 </html>
