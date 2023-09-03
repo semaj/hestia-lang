@@ -2,14 +2,14 @@
 <html lang="en-US">
   <head>
     <meta charset="utf-8" />
-    <title>Hestia Programming Language</title>
+    <title>hestia, programming language</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
   </head>
   <body>
     <div id="container">
-      <h1>Hestia: A Comfy Programming Language</h1>
-      <p><img src="fire.png" id="fire"></img>
-      <p><b>Hestia</b> (pronounced <b><i>HES-ti-a</i></b> or <b><i>es-TI-a</i></b>) is a small, functional, dynamically typed programming language designed for writing small scripts. It can be learned in an afternoon, but is not especially fast or especially general-purpose. Hestia is written in Rust and <a href="https://github.com/semaj/hestia-lang/tree/main/lib/src">free and open source</a> under the MIT license.</p>
+      <h1>hestia, a programming language<br>that feels like home</h1>
+      <img src="fire.png" id="fire"></img>
+      <p><b>hestia</b> (pronounced <b><i>HES-ti-a</i></b> or <b><i>es-TI-a</i></b>) is a small, functional, dynamically typed programming language designed for writing small scripts. It can be learned in an afternoon, but is not especially fast or especially general-purpose. Hestia is written in Rust and is <a href="https://github.com/semaj/hestia-lang/tree/main/lib/src">free and open source</a> under the MIT license.</p>
       <p><b>Current Features:</b>
         <ul>
           <li>A REPL</li>
@@ -26,57 +26,40 @@
           <li>Readable, batteries-included standard library</li>
           <li>First-class regular expressions</li>
           <li>Embeddability (in Rust)</li>
+          <li>Extensibility (Rust libraries)</li>
           <li>First-class debugger (like Ruby's pry)</li>
         </ul>
       </p>
-      <p>I designed it to make me happy, but maybe it will make you happy too. Some example expressions:</p>
-      <code>
-      <pre>
-# a comment
-
-1 # => the Integer 1
-
-1,000 => the Integer 1000 (commas are whitespace)
-
-1.0 # => the Float 1.0
-
-true # => the Boolean true
-
-'aaa # => the Symbol 'aaa
-
-"aaa" # => the String "aaa"
-
-[1 1.0 true 'aaa "aaa"] # => a List
-
-(cons 1 []) # => the List [1]
-
-{ a: 2 } # => a Map from the Symbol 'a to the Integer 2
-
-{ |x| (mul x x) } # => a Function (lexically-scoped closure)
-
-(def square { |x| (mul x x) }) # a global binding
-
-(def square-and-sum { |list|
-  (let ([squared (lmap square list)]) # a local binding
-     (lreduce 0 add squared))})
-
-(square-and-sum [1 2 3]) # a Function call => 14
-
-(def some-map { a: 1, b: 2 })
-
-(insert 'c 3 some-map) # => { 'a: 1 'b: 2 'c: 3}
-
-some-map # => { 'a: 1 b: 2 }
-      </pre>
-      </code>
-      <p>Below is a Hestia REPL running in the browser via WebAssembly. Try it!</p>
+      <h2>try it!</h2>
+      <p>Below is a Hestia REPL running in the browser via WebAssembly. <br>Try <code>(add 1 2)</code> or <code>(lmap (add 1) [1 2 3])</code>.</p>
       <div id="repl">
         <span id="result"></span>
         <span id="prompt">hestia&#62;</span>
         <input id="prompt-input"></input>
       </div>
+      <h2>example code</h2>
+      <pre>
+      <code class="language-lisp">
+# this is a comment
+(def a-list [1 2 3]) # a global value
+(def square { |x| (mul x x) }) # a global function
+(def square-and-sum { |list|
+  (let ([squared (lmap square list)]) # a local binding
+     (lreduce 0 add squared))})
+(square-and-sum a-list) # evaluates to `14`
+
+(def a-map {a: 1, b: 2, c: 3})
+(eq? a-map (insert 'c 3 {a: 1 b: 2})) # evalutes to `true`
+
+(>> 1 (add 1) (add 2) (mul 3)) # evalutes to `12`
+      </code>
+      </pre>
     </div>
   </body>
+  <link rel="stylesheet" href="default.min.css">
+  <script src="highlight.min.js"></script>
+  <script src="lisp.min.js"></script>
+  <script>hljs.highlightAll();</script>
   <script type="module">
     import init, { ev } from "./pkg/hestia_site.js";
     var history = [];
@@ -102,8 +85,17 @@ some-map # => { 'a: 1 b: 2 }
     });
   </script>
   <style>
-    h1, h2 , h3, h4 {
+    html {
+      background: #E9F8F9;
+      color: #181823;
+    }
+    h1 {
       text-align: center;
+    }
+    h1, h2 , h3, h4 {
+      background: #C0EEF2;
+      padding: 10px 10px 10px 10px;
+      border-radius: 10px;
     }
     #container {
       font-family: sans-serif;
@@ -112,15 +104,18 @@ some-map # => { 'a: 1 b: 2 }
       margin-right: auto;
     }
     #repl {
+      color: #E9F8F9;
       padding: 1%;
-      background: lightgreen;
+      background: #537FE7;
       font-family: monospace;
       height: 200px;
       overflow-y:auto;
       flex-direction: column-reverse;
+      border-radius: 10px;
     }
     #prompt-input {
-      background: lightgreen;
+    color: #E9F8F9;
+      background: #537FE7;
       font-family: monospace;
       width: 90%;
     }
@@ -135,6 +130,11 @@ some-map # => { 'a: 1 b: 2 }
       margin-right: auto;
       text-align: center;
       display: block;
+      padding-bottom: 10px;
+      padding-left: 3px;
+      border-style: solid;
+      border-radius: 50%;
+      border-color: #181823;
     }
 
   </style>
