@@ -787,6 +787,29 @@ pub fn builtins() -> Env {
                 }
             },
         },
+        Func {
+            name: "to-i".to_string(),
+            curried_args: Vec::new(),
+            min_args: Some(1),
+            max_args: Some(1),
+            f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
+                let s = match get_arg(name, 0, &args)? {
+                    Base::Hashable(Hashable::Str(s)) => Ok(s),
+                    x => Err(HestiaErr::Runtime(format!(
+                        "function `{}` expects first argument of type String, got {}",
+                        name,
+                        x.to_type()
+                    ))),
+                }?;
+                match s.parse::<i64>() {
+                    Ok(i) => Ok(Base::Hashable(Hashable::Integer(i))),
+                    Err(_) => Err(HestiaErr::Runtime(format!(
+                        "failed to parse String {} into Integer",
+                        s
+                    ))),
+                }
+            },
+        },
     ];
     for func in funcs.into_iter() {
         builtins.insert(func.name.clone(), Base::BuiltIn(func));
