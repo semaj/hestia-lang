@@ -9,57 +9,48 @@
     <div id="container">
       <h1>hestia, a programming language<br>that feels like home</h1>
       <img src="fire.png" id="fire"></img>
-      <p><b>hestia</b> (pronounced <b><i>HES-ti-a</i></b> or <b><i>es-TI-a</i></b>) is a small, functional, dynamically typed programming language designed for writing small scripts. It can be learned in an afternoon, but is not especially fast or especially general-purpose. Hestia is written in Rust and is <a href="https://github.com/semaj/hestia-lang/tree/main/lib/src">free and open source</a> under the MIT license.</p>
-      <p><b>Current Features:</b>
-        <ul>
-          <li>A REPL</li>
-          <li>Immutable-only data structures</li>
-          <li>Simple syntax and control flow (no loops, recursion only)</li>
-          <li>No user-defined types</li>
-          <li>No macros</li>
-          <li>Automatic function currying</li>
-        </ul>
-      </p>
-      <p><b>Planned features:</b>
-        <ul>
-          <li>A fully-featured, smarter REPL</li>
-          <li>Readable, batteries-included standard library</li>
-          <li>First-class regular expressions</li>
-          <li>Embeddability (in Rust)</li>
-          <li>Extensibility (Rust libraries)</li>
-          <li>First-class debugger (like Ruby's pry)</li>
-        </ul>
-      </p>
+      <p><b>hestia</b> (pronounced <b><i>HES-ti-a</i></b> or <b><i>es-TI-a</i></b>) is a small, functional, dynamically typed programming language designed for writing small scripts. It can be learned in an afternoon, but is not especially fast or especially general-purpose. <b>hestia</b> is written in Rust and is free and open <a href="https://github.com/semaj/hestia-lang/tree/main/lib/src">source</a> under the MIT license.</p>
+      <p><b>hestia</b> exposes a small set of syntactic forms. All data structures are immutable. There are no user-defined types or loops (recursion only). There are also <u>no macros</u>. </p>
+      <p>As a result, <b>hestia</b> encourages simple programs that are easy to read and comprehend. A batteries-included standard library is in-progress.</p>
+      <h2>hestia in action</h2>
+      <p>One important feature of <b>hestia</b> is automatic currying: calling a function that requires <code>N</code> arguments with fewer than <code>N</code> arguments returns a new function that takes the remaining arguments. To illustrate this, here is a small <b>hestia</b> script that writes the sum of all integers found in one file (separated by newlines) into a new file.</p>
+        <pre>
+        <code>
+(<span class="h-def">def</span> <span class="h-fun">read-and-sum</span> { |file-name|
+  (<span class="h-fun">>></span> file-name [
+      <span class="h-fun">read-file</span>           <span class="h-com"># reads String from file</span>
+      (<span class="h-fun">split</span> <span class="h-str">"\n"</span>)        <span class="h-com"># splits String into List by newlines</span>
+      (<span class="h-fun">lmap</span> <span class="h-fun">to-i</span>)         <span class="h-com"># converts each String element in List into Integer</span>
+      (<span class="h-fun">lreduce</span> 0 <span class="h-fun">add</span>)     <span class="h-com"># sums all Integers in List</span>
+     ])})
+
+(<span class="h-def">def</span> <span class="h-fun">read-sum-write</span> { |in-file-name out-file-name|
+  (<span class="h-let">let</span> ([sum (<span class="h-fun">read-and-sum</span> in-file-name)])
+    (<span class="h-fun">write-file</span> out-file-name sum))})
+
+(<span class="h-fun">read-sum-write</span> <span class="h-str">"in.txt"</span> <span class="h-str">"out.txt"</span>)</code>
+        </pre>
+        <p>The <code>>></code> function (not macro) takes a value and a list of functions. It calls the first function with the initial value, calls the next function with the result of the prior call, and so on.</p>
       <h2>try it!</h2>
-      <p>Below is a Hestia REPL running in the browser via WebAssembly. <br>Try <code>(add 1 2)</code> or <code>(lmap (add 1) [1 2 3])</code>.</p>
+      <p>Below is a <b>hestia</b> REPL running in the browser via WebAssembly. <br>Try <code>(add 1 2)</code> or <code>(lmap (add 1) [1 2 3])</code>.</p>
       <div id="repl">
         <span id="result"></span>
         <span id="prompt">hestia&#62;</span>
         <input id="prompt-input"></input>
       </div>
-      <h2>example code</h2>
-      <pre>
-      <code class="language-lisp">
-# this is a comment
-(def a-list [1 2 3]) # a global value
-(def square { |x| (mul x x) }) # a global function
-(def square-and-sum { |list|
-  (let ([squared (lmap square list)]) # a local binding
-     (lreduce 0 add squared))})
-(square-and-sum a-list) # evaluates to `14`
-
-(def a-map {a: 1, b: 2, c: 3})
-(eq? a-map (insert 'c 3 {a: 1 b: 2})) # evalutes to `true`
-
-(>> 1 (add 1) (add 2) (mul 3)) # evalutes to `12`
-      </code>
-      </pre>
+      <h2>planned features</h2>
+      <p>
+        <ul>
+          <li>fully-featured, smarter REPL</li>
+          <li>readable, batteries-included standard library</li>
+          <li>first-class regular expressions</li>
+          <li>embeddability (in Rust)</li>
+          <li>extensibility (Rust libraries)</li>
+          <li>first-class debugger (like Ruby's pry)</li>
+        </ul>
+      </p>
     </div>
   </body>
-  <link rel="stylesheet" href="default.min.css">
-  <script src="highlight.min.js"></script>
-  <script src="lisp.min.js"></script>
-  <script>hljs.highlightAll();</script>
   <script type="module">
     import init, { ev } from "./pkg/hestia_site.js";
     var history = [];
@@ -103,21 +94,26 @@
       margin-left: auto;
       margin-right: auto;
     }
+    #prompt-input {
+      color: #E9F8F9;
+      background: #181823;
+      font-family: monospace;
+      width: 90%;
+    }
     #repl {
+      background: #181823;
       color: #E9F8F9;
       padding: 1%;
-      background: #537FE7;
       font-family: monospace;
       height: 200px;
       overflow-y:auto;
       flex-direction: column-reverse;
       border-radius: 10px;
     }
-    #prompt-input {
-    color: #E9F8F9;
-      background: #537FE7;
-      font-family: monospace;
-      width: 90%;
+    pre {
+      background: #181823;
+      color: #E9F8F9;
+      padding-left: 3%;
     }
     input {
       border: none;
@@ -137,6 +133,40 @@
       border-color: #181823;
     }
 
+    .h-def {
+      color: #ff6b2b;
+      font-weight: bold;
+    }
+
+    .h-let {
+      color: #db4df7;
+      font-weight: bold;
+    }
+
+    .h-fun {
+      color: #fa5548;
+      font-weight: bold;
+    }
+
+    .h-com {
+      color: grey;
+    }
+    .h-str {
+      color: #e8db23;
+    }
+
   </style>
 </html>
 
+<!-- (def a-list [1 2 3]) # a global value -->
+<!-- (def square { |x| (mul x x) }) # a global function -->
+<!-- (def square-and-sum { |list| -->
+<!-- (let ([squared (lmap square list)]) # a local binding -->
+<!--  (lreduce 0 add squared))}) -->
+<!-- (square-and-sum a-list) # evaluates to `14` -->
+<!---->
+<!-- (def a-map {a: 1, b: 2, c: 3}) -->
+<!-- (eq? a-map (insert 'c 3 {a: 1 b: 2})) # evalutes to `true` -->
+<!---->
+<!-- (>> 1 (add 1) (add 2) (mul 3)) # evalutes to `12` -->
+<!---->
