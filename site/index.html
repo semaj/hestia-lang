@@ -32,7 +32,7 @@
         </pre>
         <p>The <code>>></code> function (not macro) takes a value and a list of functions. It calls the first function with the initial value, calls the next function with the result of the prior call, and so on.</p>
       <h2>try it!</h2>
-      <p>Below is a <b>hestia</b> REPL running in the browser via WebAssembly. <br>Try <code>(add 1 2)</code> or <code>(lmap (add 1) [1 2 3])</code>.</p>
+      <p>Below is a simple <b>hestia</b> REPL running in the browser via WebAssembly. <br>Try <code>(add 1 2)</code> or <code>(lmap (add 1) [1 2 3])</code>.</p>
       <div id="repl">
         <span id="result"></span>
         <span id="prompt">hestia&#62;</span>
@@ -49,6 +49,8 @@
           <li>first-class debugger (like Ruby's pry)</li>
         </ul>
       </p>
+      <br>
+      <p style="text-align:center;color: grey;">© James Larisch 2023</p>
     </div>
   </body>
   <script type="module">
@@ -99,6 +101,9 @@
       background: #181823;
       font-family: monospace;
       width: 90%;
+    }
+    #prompt, #result {
+      color: #C0EEF2;
     }
     #repl {
       background: #181823;
