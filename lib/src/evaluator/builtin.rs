@@ -31,6 +31,15 @@ fn usize_to_integer(u: usize) -> Result<Base, HestiaErr> {
     }
 }
 
+fn trim(value: String) -> String {
+    let mut chars = value.chars();
+    chars.next();
+    chars.next_back();
+    chars.next_back();
+    chars.next_back();
+    chars.as_str().to_string()
+}
+
 pub fn builtins() -> Env {
     let mut builtins: Env = HashMap::new();
     let funcs = vec![
@@ -755,7 +764,7 @@ pub fn builtins() -> Env {
                     ))),
                 }?;
                 match fs::read_to_string(&file_name) {
-                    Ok(s) => Ok(Base::Hashable(Hashable::Str(s))),
+                    Ok(s) => Ok(Base::Hashable(Hashable::Str(trim(format!("{:?}", s))))),
                     Err(e) => Err(HestiaErr::Runtime(format!(
                         "failed reading file {}: {}",
                         file_name, e
@@ -778,6 +787,7 @@ pub fn builtins() -> Env {
                     ))),
                 }?;
                 let to_write = get_arg(name, 1, &args)?;
+                println!("{}", to_write.print());
                 match fs::write(&file_name, to_write.print()) {
                     Ok(_) => Ok(to_write),
                     Err(e) => Err(HestiaErr::Runtime(format!(

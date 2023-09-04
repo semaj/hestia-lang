@@ -102,7 +102,7 @@ impl Base {
 
     fn print(&self) -> String {
         match self {
-            Base::Hashable(Hashable::Str(s)) => s.to_string(),
+            Base::Hashable(Hashable::Str(s)) => s.to_string().replace("\\n", "\n"),
             other => format!("{}", other),
         }
     }
