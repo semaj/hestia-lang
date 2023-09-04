@@ -1,0 +1,84 @@
+html {
+  background: #E9F8F9;
+  color: #181823;
+}
+p {
+  line-height: 140%;
+}
+h1 {
+  text-align: center;
+}
+h1, h2 , h3, h4 {
+  background: #C0EEF2;
+  padding: 10px 10px 10px 10px;
+  border-radius: 10px;
+}
+#container {
+  font-family: sans-serif;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+#prompt-input {
+  color: #E9F8F9;
+  background: #181823;
+  font-family: monospace;
+  width: 90%;
+}
+#prompt, #result {
+  color: #C0EEF2;
+}
+#repl {
+  background: #181823;
+  color: #E9F8F9;
+  padding: 1%;
+  font-family: monospace;
+  height: 200px;
+  overflow-y:auto;
+  flex-direction: column-reverse;
+  border-radius: 10px;
+}
+pre {
+  background: #181823;
+  color: #E9F8F9;
+  padding-left: 3%;
+}
+input {
+  border: none;
+}
+textarea:focus, input:focus{
+  outline: none;
+}
+#fire {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  display: block;
+  padding-bottom: 10px;
+  padding-left: 3px;
+  border-style: solid;
+  border-radius: 50%;
+  border-color: #181823;
+}
+
+.h-def {
+  color: #ff6b2b;
+  font-weight: bold;
+}
+
+.h-let {
+  color: #db4df7;
+  font-weight: bold;
+}
+
+.h-fun {
+  color: #fa5548;
+  font-weight: bold;
+}
+
+.h-com {
+  color: grey;
+}
+.h-str {
+  color: #e8db23;
+}

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <title>hestia tutorial</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div id="container">
+      <h1>hestia tutorial</h1>
+      <p><b>hestia</b> is a small, functional language built for scripting. This is a short, incomplete walkthrough of the language. Feel free to try things in the REPL below:</p>
+      <div id="repl">
+        <span id="result"></span>
+        <span id="prompt">hestia&#62;</span>
+        <input id="prompt-input"></input>
+      </div>
+      <h2>data types</h2>
+      <p>hestia has no user-defined data types. While this limits expressive power, it also limits complexity. Here are the current data types in hestia, with examples:
+      <ul>
+        <li>Integer - <code>145, 0, -58212</code></li>
+        <li>Float - <code>145.0, 0.18248, -58212.888</code></li>
+        <li>String - <code>"hello", "", "---\n----"</code></li>
+        <li>Symbol - <code>'aaaa, 'test-symbol, 'HELLO</code></li>
+        <li>Boolean - <code>true, false</code></li>
+        <li>List - <code>[], [1 2 3], [true 'a [1]]</code></li>
+        <li>Map - <code>{}, {a: 23}, {'a: 23}, {2: "a" "test": true}</code></li>
+        <li>Function - <code>{|x| (add 1 x)}, {||}, {|a b c| (add a b c) }</code></li>
+        <li>Option - <code>(none), (some 123), (some [1 2 true])</code></li>
+      </ul>
+      </p>
+      <p>Note that commas in hestia are whitespace, so <code>(eq? 1000 1,000)</code>, <code>(eq? {a: 1 b: 2} {a: 1, b: 2})</code>, and <code>(eq? [1, 2, 3] [1 2 3])</code> all evaluate to <code>true</code>.</p>
+      <p>Also note that <code>{a: 1}</code> is syntactic sugar (shorthand) for <code>{'a: 1}</code>, a map that contains one key-value pair: from the Symbol <code>'a</code> to the Integer <code>1</code>.</p>
+      <p><b>All data structures in hestia are immutable.</b>There are no Functions that modify data structures in-place. Instead, Functions return NEW data structures.</p>
+      <h2>named values</h2>
+      <p>To globally name a value, use <code>(def x 100)</code>. Later code can then reference <code>x</code>.</p>
+      <p>To locally name a value, use <code>(let ([x 100]) x)</code>. Only code within the <code>let</code> expression can reference such names.</p>
+      <p>Global are just named Functions, e.g., <code>(def add1 {|x| (add 1 x)})</code>
+      <h2>map and reduce</h2>
+      <p>Probably the most important Functions in hestia are <code>lmap</code> and <code>lreduce</code>. The <code>l</code> stands for List. For instance, to add 1 to ever Integer in a List, you would call <code>(lmap add1 [1 2 3])</code> which evaluates to <code>[2 3 4]</code>. <code>lmap</code> takes a Function and a List as its arguments, and is defined as follows:</p>
+      <pre><code>
+(def lmap { |f list|
+  (if (empty? list)
+      []
+      (cons (f (first list))
+            (lmap f (rest list))))})
+      </code></pre>
+      <p>Let's break this down. First, an <code>(if test then else)</code> expression checks if <code>test</code> is <code>true</code> and if so, evaluates to <code>then</code>; if not, it evaluates to <code>else</code>.</p>
+      <p>Thus, <code>lmap</code> first checks if the given List is empty, and if so, it simple returns an empty List. If not, it calls the given Function on the first element of the list, and then recursively calls <code>lmap</code> on the rest of the List. It then uses <code>cons</code>, which takes a value and a List and returns a new List with that value prepended to the List, to return a new updated List.</p>
+      <p>However, all Functions in hestia are automatically curried. To show what this means, consider that we could write the adding <code>lmap</code> equivalently as follows: <code>(lmap (add 1) [1 2 3])</code> because <code>add</code> requires at least 2 arguments---when it receives 1 argument, it returns a Function that takes (at least) 1 argument and adds 1 to it.</p>
+      <p>To sum all Integers in a List, use <code>(lreduce 0 add [1 2 3])</code>. <code>lreduce</code> takes a "base" value, a Function, and a List. Here's the source:</p>
+      <pre><code>
+(def lreduce { |acc f list|
+  (if (empty? list)
+      acc
+      (lreduce (f acc (first list)) f (rest list)))})
+      </code></pre>
+      <p>In our case, <code>lreduce</code> adds "pairs" of Integers, with the first pair being <code>0</code> and <code>1</code>, the second pair being the sum of the first pair and <code>2</code>, and so on.</p>
+      <p style="text-align:center;color: grey;">© James Larisch 2023</p>
+    </div>
+  </body>
+  <script src="my.js" type="module"></script>
+</html>

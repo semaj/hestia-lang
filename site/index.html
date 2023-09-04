@@ -4,12 +4,13 @@
     <meta charset="utf-8" />
     <title>hestia, programming language</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
   </head>
   <body>
     <div id="container">
       <h1>hestia, a programming language<br>that feels like home</h1>
       <img src="fire.png" id="fire"></img>
-      <p><b>hestia</b> (pronounced <b><i>es-TI-ah</i></b> or <b><i>HES-ti-ah</i></b>) is a small, functional, dynamically typed programming language designed for writing small scripts. It can be learned in an afternoon, but is not especially fast or especially general-purpose. <b>hestia</b> is written in Rust and is free and open <a href="https://github.com/semaj/hestia-lang/tree/main/lib/src">source</a> under the MIT license.</p>
+      <p><b>hestia</b> (pronounced <b><i>es-TI-ah</i></b> or <b><i>HES-ti-ah</i></b>) is a small, functional, dynamically typed programming language designed for writing small scripts. It can be learned in an afternoon, but is not especially fast or especially general-purpose. <b>hestia</b> is written in Rust and is free and open <a href="https://github.com/semaj/hestia-lang">source</a> under the MIT license.</p>
       <p><b>hestia</b> exposes a small set of syntactic forms. All data structures are immutable. There are no user-defined types or loops (recursion only). There are also <u>no macros</u>. </p>
       <p>As a result, <b>hestia</b> encourages simple programs that are easy to read and comprehend. A batteries-included standard library is in-progress.</p>
       <h2>hestia in action</h2>
@@ -31,6 +32,7 @@
 (<span class="h-fun">read-sum-write</span> <span class="h-str">"in.txt"</span> <span class="h-str">"out.txt"</span>)</code>
         </pre>
         <p>The <code>>></code> function (not macro) takes a value and a list of functions. It calls the first function with the initial value, calls the next function with the result of the prior call, and so on.</p>
+        <p style="text-align:center;font-size: 150%;"><a href="tutorial.html">hestia tutorial</a></p>
       <h2>try it!</h2>
       <p>Below is a simple <b>hestia</b> REPL running in the browser via WebAssembly. <br>Try <code>(add 1 2)</code> or <code>(lmap (add 1) [1 2 3])</code>.</p>
       <div id="repl">
@@ -53,114 +55,7 @@
       <p style="text-align:center;color: grey;">© James Larisch 2023</p>
     </div>
   </body>
-  <script type="module">
-    import init, { ev } from "./pkg/hestia_site.js";
-    var history = [];
-    var index = 0;
-    init().then(() => {
-    });
-    document.getElementById("prompt-input")
-      .addEventListener("keyup", function(event) {
-        event.preventDefault();
-        if (event.keyCode === 13) {
-            let inputValue = document.getElementById("prompt-input").value;
-            let result = ev(inputValue);
-            history.push(`hestia> ${inputValue}\n=> ${result}\n`); index++; document.getElementById("result").innerText = history.join("");
-            var element = document.getElementById("repl");
-            element.scrollTop = element.scrollHeight;
-            document.getElementById("prompt-input").value = "";
-        }
-        // if (event.keyCode === 38) { // up
-        //   if (index > 0) {
-        //     document.getElementById("prompt-input").value = history.
-        //   }
-        // }
-    });
-  </script>
-  <style>
-    html {
-      background: #E9F8F9;
-      color: #181823;
-    }
-    h1 {
-      text-align: center;
-    }
-    h1, h2 , h3, h4 {
-      background: #C0EEF2;
-      padding: 10px 10px 10px 10px;
-      border-radius: 10px;
-    }
-    #container {
-      font-family: sans-serif;
-      max-width: 700px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    #prompt-input {
-      color: #E9F8F9;
-      background: #181823;
-      font-family: monospace;
-      width: 90%;
-    }
-    #prompt, #result {
-      color: #C0EEF2;
-    }
-    #repl {
-      background: #181823;
-      color: #E9F8F9;
-      padding: 1%;
-      font-family: monospace;
-      height: 200px;
-      overflow-y:auto;
-      flex-direction: column-reverse;
-      border-radius: 10px;
-    }
-    pre {
-      background: #181823;
-      color: #E9F8F9;
-      padding-left: 3%;
-    }
-    input {
-      border: none;
-    }
-    textarea:focus, input:focus{
-      outline: none;
-    }
-    #fire {
-      margin-left: auto;
-      margin-right: auto;
-      text-align: center;
-      display: block;
-      padding-bottom: 10px;
-      padding-left: 3px;
-      border-style: solid;
-      border-radius: 50%;
-      border-color: #181823;
-    }
-
-    .h-def {
-      color: #ff6b2b;
-      font-weight: bold;
-    }
-
-    .h-let {
-      color: #db4df7;
-      font-weight: bold;
-    }
-
-    .h-fun {
-      color: #fa5548;
-      font-weight: bold;
-    }
-
-    .h-com {
-      color: grey;
-    }
-    .h-str {
-      color: #e8db23;
-    }
-
-  </style>
+  <script src="my.js" type="module"></script>
 </html>
 
 <!-- (def a-list [1 2 3]) # a global value -->
