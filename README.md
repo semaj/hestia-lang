@@ -4,7 +4,7 @@
 typed programming language designed for writing small scripts. It can be learned
 in an afternoon, but is not especially fast or especially general-purpose.
 
-See <site> for more details.
+See [site](https://hestia-lang.org/) for more details.
 
 **hestia** aims to use as few (Rust) dependencies as possible, so expect lots of
 yak-shaving.
