@@ -2,6 +2,6 @@ export SHELL := bash
 .SHELLFLAGS := -e -o pipefail -c
 
 test:
-	cargo test --verbose
-	cargo fmt --all -- --check
-	cargo clippy -- -D warnings
+	cd lib && cargo test --verbose
+	cd lib && cargo fmt --all -- --check
+	cd lib && cargo clippy -- -D warnings

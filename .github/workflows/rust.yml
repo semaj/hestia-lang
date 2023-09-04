@@ -53,6 +53,7 @@ jobs:
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
+    working-directory: ./lib
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
