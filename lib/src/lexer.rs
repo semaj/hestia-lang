@@ -245,6 +245,10 @@ impl Lexer {
             }
             c = self.peek_char()?;
             match c {
+                ',' => {
+                self.take()?;
+                continue;
+                }
                 '-' => {
                     if !first {
                         return Err(HestiaErr::Syntax(
