@@ -246,8 +246,8 @@ impl Lexer {
             c = self.peek_char()?;
             match c {
                 ',' => {
-                self.take()?;
-                continue;
+                    self.take()?;
+                    continue;
                 }
                 '-' => {
                     if !first {
