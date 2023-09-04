@@ -27,6 +27,9 @@ the REPL/binary and WebAssembly REPL, respectively.
 **To run the current hestia REPL, clone this repository, `cd bin`, and `cargo
 run`.**
 
+To run a **hestia** file, run `cargo run -- <filename>`. This will still drop you
+into a REPL afterwards.
+
 ## inspiration
 
 Languages that have influenced me over the years:
