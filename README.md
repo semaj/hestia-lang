@@ -1,6 +1,6 @@
 # the hestia programming language
 
-**hestia** (pronounced *HES-ti-a* or *es-TI-a*) is a small, functional, dynamically
+**hestia** (pronounced *es-TI-ah* or *HES-ti-ah*) is a small, functional, dynamically
 typed programming language designed for writing small scripts. It can be learned
 in an afternoon, but is not especially fast or especially general-purpose.
 
