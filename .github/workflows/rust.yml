@@ -2,13 +2,15 @@ on: [push, pull_request]
 
 name: Hestia CI
 
+defaults:
+  run:
+    working-directory: ./lib
+
+
 jobs:
   check:
     name: Check
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./lib
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -16,16 +18,11 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
+      - run: cargo check
 
   test:
     name: Test Suite
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./lib
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -33,16 +30,11 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
+      - run: cargo test
 
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./lib
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -51,17 +43,11 @@ jobs:
           toolchain: stable
           override: true
       - run: rustup component add rustfmt
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+      - run: cargo fmt --all -- --check
 
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./lib
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -70,7 +56,4 @@ jobs:
           toolchain: stable
           override: true
       - run: rustup component add clippy
-      - uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: -- -D warnings
+      - run: cargo clippy -- -D warnings
