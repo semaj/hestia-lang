@@ -100,10 +100,16 @@ pub fn builtins() -> Env {
             max_args: None,
             f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
                 let mut int_sum: i64 = 0;
+                let mut first = true;
                 for (i, arg) in args.iter().enumerate() {
                     match arg {
                         Base::Hashable(Hashable::Integer(n)) => {
-                            int_sum -= n;
+                            if first {
+                                int_sum = *n;
+                                first = false;
+                            } else {
+                                int_sum -= n;
+                            }
                         }
                         _ => {
                             return Err(HestiaErr::Runtime(format!(
@@ -125,10 +131,16 @@ pub fn builtins() -> Env {
             max_args: None,
             f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
                 let mut float_sum: f64 = 0.0;
+                let mut first = true;
                 for (i, arg) in args.iter().enumerate() {
                     match arg {
                         Base::Float(n) => {
-                            float_sum -= n;
+                            if first {
+                                float_sum = *n;
+                                first = false;
+                            } else {
+                                float_sum -= n;
+                            }
                         }
                         _ => {
                             return Err(HestiaErr::Runtime(format!(
