@@ -14,8 +14,8 @@
       <p><b>hestia</b> exposes a small set of syntactic forms. All data structures are immutable. There are no user-defined types or loops (recursion only). There are also <u>no macros</u>. </p>
       <p>As a result, <b>hestia</b> encourages simple programs that are easy to read and comprehend. A batteries-included standard library is in-progress.</p>
       <h2>hestia in action</h2>
-      <p>One important feature of <b>hestia</b> is automatic currying: calling a function that requires <code>N</code> arguments with fewer than <code>N</code> arguments returns a new function that takes the remaining arguments. To illustrate this, here is a small <b>hestia</b> script that writes the sum of all integers found in one file (separated by newlines) into a new file.</p>
-        <pre>
+      <p>To illustrate <b>hestia</b>, consider a small script that reads integers from a file (each separated by a newline), parses them, sums them, then writes the sum to a new file.</p>
+      <pre>
         <code>
 (<span class="h-def">def</span> <span class="h-fun">read-and-sum</span> { |file-name|
   (<span class="h-fun">>></span> file-name [
@@ -30,8 +30,9 @@
     (<span class="h-fun">write-file</span> out-file-name sum))})
 
 (<span class="h-fun">read-sum-write</span> <span class="h-str">"in.txt"</span> <span class="h-str">"out.txt"</span>)</code>
-        </pre>
+      </pre>
         <p>The <code>>></code> function (not macro) takes a value and a list of functions. It calls the first function with the initial value, calls the next function with the result of the prior call, and so on.</p>
+        <p>One important feature of <b>hestia</b> is automatic currying: calling a function that requires <code>N</code> arguments with fewer than <code>N</code> arguments returns a new function that takes the remaining arguments. <br><code>(split "\n")</code> is a curried function.</p>
         <p style="text-align:center;font-size: 150%;"><a href="tutorial.html">hestia tutorial</a></p>
       <h2>try it!</h2>
       <p>Below is a simple <b>hestia</b> REPL running in the browser via WebAssembly. <br>Try <code>(add 1 2)</code> or <code>(lmap (add 1) [1 2 3])</code>.</p>
