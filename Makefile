@@ -4,4 +4,4 @@ export SHELL := bash
 test:
 	cd lib && cargo test --verbose
 	cd lib && cargo fmt --all -- --check
-	cd lib && cargo clippy -- -D warnings
+	cd lib && cargo clippy --all-targets --all-features -- -D warnings

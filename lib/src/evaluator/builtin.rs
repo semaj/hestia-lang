@@ -465,7 +465,7 @@ pub fn builtins() -> Env {
             max_args: Some(1),
             f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
                 match get_arg(name, 0, &args)? {
-                    Base::List(v) => match v.get(0) {
+                    Base::List(v) => match v.front() {
                         Some(b) => Ok(b.clone()),
                         None => Err(HestiaErr::Runtime(format!(
                             "attempting to call `{}` on an empty List",
@@ -487,7 +487,7 @@ pub fn builtins() -> Env {
             max_args: Some(1),
             f: |name: &str, args: Vec<Base>| -> Result<Base, HestiaErr> {
                 match get_arg(name, 0, &args)? {
-                    Base::List(v) => match v.get(0) {
+                    Base::List(v) => match v.front() {
                         Some(_) => {
                             let mut new = v.clone();
                             new.pop_front();
