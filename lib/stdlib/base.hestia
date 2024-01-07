@@ -17,27 +17,31 @@
       value
       (>> ((first fs) value) (rest fs)))})
 
-(def lmap { |f list|
+(def map { |f list|
   (if (empty? list)
       []
       (cons (f (first list))
-            (lmap f (rest list))))})
+            (map f (rest list))))})
 
-(test [2 3 4] (lmap {|x| (add 1 x)} [1 2 3]))
+(test [2 3 4] (map {|x| (add 1 x)} [1 2 3]))
 
-(def lreduce { |acc f list|
+(def reduce { |acc f list|
   (if (empty? list)
       acc
-      (lreduce (f acc (first list)) f (rest list)))})
+      (reduce (f acc (first list)) f (rest list)))})
 
-(test 6 (lreduce 0 {|acc x| (add acc x)} [1 2 3]))
+(test 6 (reduce 0 {|acc x| (add acc x)} [1 2 3]))
 
 (test 9 (>> [1 2 3]
             [
-              (lmap {|x| (add 1 x)})
-              (lreduce 0 {|acc x| (add acc x)})
+              (map {|x| (add 1 x)})
+              (reduce 0 {|acc x| (add acc x)})
             ]))
 
 (def sreverse { |s| (>> s [(split "") lreverse (join "")]) })
 
 (test "dcba" (sreverse "abcd"))
+
+(def sum (reduce 0 add))
+
+(test 10 (sum [1 2 3 4]))
