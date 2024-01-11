@@ -3,6 +3,14 @@ name = "hestia"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "repl"
+path = "src/main.rs"
+
+[[bin]]
+name = "tests"
+path = "src/tests.rs"
+
 [dependencies]
 hestia_lib = { path = "../lib" }
 rustyline = "12.0.0"
