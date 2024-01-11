@@ -43,6 +43,9 @@ fn main() -> rustyline::Result<()> {
         let readline = rl.readline("hestia> ");
         match readline {
             Ok(line) => {
+                if line == "exit" || line == "quit" {
+                    break;
+                }
                 rl.add_history_entry(line.as_str())?;
                 rl.save_history("hestia.history")?;
                 match parser::parse(line) {
