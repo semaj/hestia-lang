@@ -227,21 +227,20 @@ impl Lexer {
                             "failed to parse float".to_string(),
                         )),
                     };
-                } else {
-                    return match token.iter().collect::<String>().parse::<i64>() {
-                        Ok(num) => Ok(AnnotatedToken {
-                            token: Token::Integer(num),
-                            line,
-                            col_start,
-                            col_end: self.col - 1,
-                        }),
-                        Err(_) => Err(HestiaErr::Syntax(
-                            line,
-                            col_start,
-                            "failed to parse integer".to_string(),
-                        )),
-                    };
                 }
+                return match token.iter().collect::<String>().parse::<i64>() {
+                    Ok(num) => Ok(AnnotatedToken {
+                        token: Token::Integer(num),
+                        line,
+                        col_start,
+                        col_end: self.col - 1,
+                    }),
+                    Err(_) => Err(HestiaErr::Syntax(
+                        line,
+                        col_start,
+                        "failed to parse integer".to_string(),
+                    )),
+                };
             }
             c = self.peek_char()?;
             match c {
@@ -284,21 +283,20 @@ impl Lexer {
                                     "failed to parse float".to_string(),
                                 )),
                             };
-                        } else {
-                            return match token.iter().collect::<String>().parse::<i64>() {
-                                Ok(num) => Ok(AnnotatedToken {
-                                    token: Token::Integer(num),
-                                    line,
-                                    col_start,
-                                    col_end: self.col - 1,
-                                }),
-                                Err(_) => Err(HestiaErr::Syntax(
-                                    line,
-                                    col_start,
-                                    "failed to parse integer".to_string(),
-                                )),
-                            };
                         }
+                        return match token.iter().collect::<String>().parse::<i64>() {
+                            Ok(num) => Ok(AnnotatedToken {
+                                token: Token::Integer(num),
+                                line,
+                                col_start,
+                                col_end: self.col - 1,
+                            }),
+                            Err(_) => Err(HestiaErr::Syntax(
+                                line,
+                                col_start,
+                                "failed to parse integer".to_string(),
+                            )),
+                        };
                     }
                 }
             }
@@ -331,6 +329,35 @@ impl Lexer {
                 });
             }
             token.push(*self.take()?);
+        }
+    }
+
+    // Clear whitespace and comments
+    pub fn clean_up(&mut self) -> Result<(), HestiaErr> {
+        if let Ok(x) = self.peek_char() {
+            match x {
+                '\n' => {
+                    self.take()?;
+                    self.line += 1;
+                    self.col = 0;
+                    self.clean_up()
+                }
+                ' ' => {
+                    self.take()?;
+                    self.clean_up()
+                }
+                ',' => {
+                    self.take()?;
+                    self.clean_up()
+                }
+                '#' => {
+                    self.take_comment()?;
+                    self.clean_up()
+                }
+                _ => Ok(()),
+            }
+        } else {
+            Ok(())
         }
     }
 
@@ -433,7 +460,10 @@ impl Lexer {
                 self.take()?;
                 Ok(r)
             }
-            '#' => self.take_comment(),
+            '#' => {
+                self.take_comment()?;
+                self.step()
+            }
             c => {
                 self.is_space_char(c)?;
                 if NUMBER_CHARS.contains(&c) || c == &'-' {
@@ -457,7 +487,6 @@ impl Lexer {
     }
 
     pub fn is_done(&self) -> bool {
-        // TODO: when done, check if there are dangling parens in stack?
         self.position >= self.chars.len()
     }
 
@@ -486,6 +515,7 @@ mod test {
         let mut tokens = Vec::new();
         while !lexer.is_done() {
             let token = lexer.step()?;
+            lexer.clean_up()?;
             tokens.push(token);
         }
         Ok(tokens)
@@ -513,12 +543,12 @@ mod test {
                 }]
             ),
             (
-                "# 1.12",
+                "1.12 # 1.13",
                 vec![AnnotatedToken {
-                    token: Token::Comment(" 1.12".to_string()),
+                    token: Token::Float(1.12),
                     line: 0,
                     col_start: 0,
-                    col_end: 5,
+                    col_end: 3,
                 }]
             ),
             (
@@ -606,12 +636,6 @@ mod test {
                         line: 0,
                         col_start: 12,
                         col_end: 12,
-                    },
-                    AnnotatedToken {
-                        token: Token::Comment(" comment ".to_string()),
-                        line: 0,
-                        col_start: 14,
-                        col_end: 23,
                     },
                     AnnotatedToken {
                         token: Token::Closeable(Closeable::OpenSquigglyParen),

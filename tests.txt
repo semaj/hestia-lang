@@ -11,3 +11,15 @@ comments
 12
 -
 12
+---
+whitespace after expression
+-
+(def x 12)  , ,
+-
+12
+---
+comments after expression
+-
+(def x 12) ,,,, # hi
+-
+12

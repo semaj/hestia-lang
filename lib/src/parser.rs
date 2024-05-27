@@ -165,6 +165,7 @@ impl Parser {
         }
         let result = self.peek()?;
         self.cursor += 1;
+        self.lexer.clean_up()?;
         Ok(result)
     }
 
