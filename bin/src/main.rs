@@ -17,6 +17,7 @@ fn load(evaluator: &mut evaluator::Evaluator, filename: &str) -> Result<(), erro
 }
 
 fn main() -> rustyline::Result<()> {
+    println!("{}", regex::evaluate("xxaabc").unwrap());
     let mut evaluator = match evaluator::Evaluator::loaded() {
         Ok(evalr) => evalr,
         Err(e) => {

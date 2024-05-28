@@ -15,5 +15,6 @@ Cargo.lock
 hestia.history
 
 .DS_Store
- **/*.txt
- **/*.
+**/*.txt
+*/*.
+tags

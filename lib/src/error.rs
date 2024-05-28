@@ -6,6 +6,7 @@ pub enum HestiaErr {
     Runtime(String),
     User(String),
     Internal(String),
+    Regex(String),
 }
 
 impl fmt::Display for HestiaErr {
@@ -22,6 +23,9 @@ impl fmt::Display for HestiaErr {
             }
             HestiaErr::User(s) => {
                 write!(f, "user error: {}", s)
+            }
+            HestiaErr::Regex(s) => {
+                write!(f, "regex error: {}", s)
             }
         }
     }
